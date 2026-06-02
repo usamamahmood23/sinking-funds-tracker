@@ -1,0 +1,3131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#FAFAF9" />
+  <meta name="description" content="Offline-first savings goal tracker. Plan ahead. Save in peace." />
+  <title>Sinking Funds</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png" />
+  <link rel="shortcut icon" href="icons/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+
+  <style>
+    /* ==========================================================
+       DESIGN TOKENS — Light first, dark as opt-in
+       ========================================================== */
+    :root {
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --surface-subtle: #F5F5F4;
+      --border: #E7E5E4;
+      --border-strong: #D6D3D1;
+      --accent: #0F766E;
+      --accent-hover: #0D5F58;
+      --accent-subtle: #F0FDFA;
+      --text-primary: #1C1917;
+      --text-secondary: #57534E;
+      --text-muted: #A8A29E;
+      --success: #15803D;
+      --success-subtle: #F0FDF4;
+      --warning: #B45309;
+      --warning-subtle: #FFFBEB;
+      --danger: #B91C1C;
+      --danger-subtle: #FEF2F2;
+      --overlay: rgba(0, 0, 0, 0.4);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.10);
+      --radius-card: 12px;
+      --radius-input: 10px;
+      --radius-pill: 999px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --header-h: 64px;
+      --navbar-h: 72px;
+      --easing: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #0C0A09;
+      --surface: #1C1917;
+      --surface-subtle: #292524;
+      --border: #292524;
+      --border-strong: #44403C;
+      --accent: #14B8A6;
+      --accent-hover: #2DD4BF;
+      --accent-subtle: rgba(20, 184, 166, 0.10);
+      --text-primary: #FAFAF9;
+      --text-secondary: #A8A29E;
+      --text-muted: #78716C;
+      --success: #4ADE80;
+      --success-subtle: rgba(74, 222, 128, 0.10);
+      --warning: #FBBF24;
+      --warning-subtle: rgba(251, 191, 36, 0.10);
+      --danger: #F87171;
+      --danger-subtle: rgba(248, 113, 113, 0.10);
+      --overlay: rgba(0, 0, 0, 0.6);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* ==========================================================
+       BASE
+       ========================================================== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      line-height: 1.5;
+      transition: background 200ms ease, color 200ms ease;
+      overscroll-behavior-y: none;
+    }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
+    input, select, textarea { font-family: inherit; color: inherit; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); }
+    h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; }
+    p { margin: 0; }
+
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    .tabular { font-variant-numeric: tabular-nums; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .hidden { display: none !important; }
+
+    /* ==========================================================
+       APP SHELL
+       ========================================================== */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-bottom: calc(var(--navbar-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* ----- Header ----- */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: var(--header-h);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px;
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .brand {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    .header-actions { display: inline-flex; align-items: center; gap: 4px; }
+    .demo-pill {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+    }
+    .demo-pill:hover { background: var(--surface-subtle); color: var(--text-primary); border-color: var(--border-strong); }
+    .install-pill {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      padding: 7px 12px;
+      background: var(--accent-subtle);
+      border-radius: var(--radius-pill);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 180ms ease;
+    }
+    .install-pill:hover { filter: brightness(0.96); }
+    .install-pill svg { width: 14px; height: 14px; }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      transition: background 180ms ease, color 180ms ease;
+    }
+    .icon-btn:hover { background: var(--surface-subtle); color: var(--text-primary); }
+    .icon-btn svg { width: 18px; height: 18px; stroke-width: 1.75; }
+
+    /* ----- Main ----- */
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+    .view { display: none; }
+    .view.active { display: block; animation: fade-in 200ms ease; }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* ----- Navigation: bottom bar (mobile) ----- */
+    .sidebar-brand { display: none; }
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 4px;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 4px;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: color 180ms ease;
+    }
+    .nav-item svg { width: 22px; height: 22px; stroke-width: 1.75; }
+    .nav-item.active { color: var(--accent); }
+    .nav-fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.30);
+      transition: background 180ms ease, transform 180ms ease;
+      flex-shrink: 0;
+      margin-top: -16px;
+    }
+    [data-theme="dark"] .nav-fab { color: #0C0A09; }
+    .nav-fab:hover { background: var(--accent-hover); }
+    .nav-fab svg { width: 22px; height: 22px; stroke-width: 2; }
+
+    /* ----- Desktop: sidebar ----- */
+    @media (min-width: 1024px) {
+      .app-shell { flex-direction: row; padding-bottom: 0; }
+      .app-header { display: none; }
+      .nav-bar {
+        position: sticky;
+        top: 0;
+        bottom: auto;
+        height: 100vh;
+        width: 240px;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 2px;
+        padding: 24px 16px;
+        border-top: none;
+        border-right: 1px solid var(--border);
+        background: var(--bg);
+        flex-shrink: 0;
+      }
+      .sidebar-brand {
+        display: block;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--text-primary);
+        padding: 4px 12px 28px;
+      }
+      .nav-item {
+        flex: none;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 10px 14px;
+        font-size: 14px;
+        border-radius: 8px;
+      }
+      .nav-item:hover { background: var(--surface-subtle); color: var(--text-secondary); }
+      .nav-item.active { background: var(--accent-subtle); color: var(--accent); }
+      .nav-item.active:hover { background: var(--accent-subtle); color: var(--accent); }
+      .nav-fab {
+        margin-top: 16px;
+        align-self: stretch;
+        height: 44px;
+        width: auto;
+        border-radius: var(--radius-input);
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .nav-fab::after { content: 'New fund'; }
+      .app-content-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      .desktop-header {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: color-mix(in srgb, var(--bg) 86%, transparent);
+        backdrop-filter: saturate(140%) blur(12px);
+        -webkit-backdrop-filter: saturate(140%) blur(12px);
+        height: var(--header-h);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 32px;
+        border-bottom: 1px solid var(--border);
+      }
+      .desktop-header .brand { font-size: 0; }
+      main { padding: 32px; }
+    }
+    .desktop-header { display: none; }
+    @media (min-width: 1024px) { .desktop-header { display: flex; } }
+
+    /* ==========================================================
+       BUTTONS
+       ========================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius-input);
+      font-weight: 500;
+      font-size: 14px;
+      transition: background 180ms ease, color 180ms ease, border-color 180ms ease, transform 120ms ease;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      line-height: 1;
+      min-height: 40px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn svg { width: 16px; height: 16px; stroke-width: 1.75; }
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent) 0%, #115E59 100%);
+      color: white;
+      font-weight: 500;
+    }
+    [data-theme="dark"] .btn-primary { background: var(--accent); color: #0C0A09; font-weight: 600; }
+    .btn-primary:hover { filter: brightness(1.04); }
+    [data-theme="dark"] .btn-primary:hover { background: var(--accent-hover); filter: none; }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: var(--surface-subtle); border-color: var(--border-strong); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { background: var(--surface-subtle); color: var(--text-primary); }
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    .btn-danger:hover { filter: brightness(1.06); }
+    .btn-block { width: 100%; }
+
+    /* ==========================================================
+       CARDS
+       ========================================================== */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ==========================================================
+       HOME: HERO + ACTIONS
+       ========================================================== */
+    .hero {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 1024px) { .hero { padding: 32px; } }
+    .hero-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .hero-amount {
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+      margin: 6px 0 4px;
+      line-height: 1.05;
+    }
+    .hero-subline { color: var(--text-secondary); font-size: 14px; }
+    .hero-mixed-note { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+    .hero-progress { margin: 20px 0 16px; }
+    .hero-stats {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .hero-stats .sep { color: var(--text-muted); }
+    .hero-stats .v { color: var(--text-primary); font-weight: 500; }
+
+    .progress {
+      height: 6px;
+      background: var(--surface-subtle);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    [data-theme="dark"] .progress { background: #292524; }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 300ms ease-out;
+    }
+    .progress-fill.warning { background: var(--warning); }
+    .progress-fill.danger { background: var(--danger); }
+    .progress-fill.success { background: var(--success); }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 1024px) { .action-row { justify-content: flex-end; } }
+    .action-row .btn { flex: 1; min-width: 0; }
+    @media (min-width: 640px) { .action-row .btn { flex: 0 0 auto; } }
+
+    /* ==========================================================
+       FILTER TABS (underline style)
+       ========================================================== */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 12px 4px;
+      margin-right: 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      transition: color 180ms ease, border-color 180ms ease;
+      white-space: nowrap;
+      margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ==========================================================
+       SEARCH
+       ========================================================== */
+    .search-row {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .search-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px 0 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-input);
+      background: var(--surface);
+      font-size: 14px;
+      color: var(--text-primary);
+      transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); outline: none; }
+    .search-row svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      stroke-width: 1.75;
+      pointer-events: none;
+    }
+
+    /* ==========================================================
+       FUND CARDS GRID
+       ========================================================== */
+    .fund-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 640px) { .fund-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .fund-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .fund-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: left;
+      width: 100%;
+      transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    }
+    .fund-card:hover { border-color: var(--border-strong); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .fund-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .fund-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .fund-icon svg { width: 20px; height: 20px; stroke-width: 1.75; }
+    .fund-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .fund-status-dot.onTrack, .fund-status-dot.completed { background: var(--success); }
+    .fund-status-dot.behind { background: var(--warning); }
+    .fund-status-dot.overdue { background: var(--danger); }
+
+    .fund-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .fund-category {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .fund-amounts {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .fund-saved {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .fund-target {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .fund-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      gap: 8px;
+    }
+    .fund-footer .needed { color: var(--text-primary); font-weight: 500; }
+
+    /* ==========================================================
+       EMPTY STATE
+       ========================================================== */
+    .empty {
+      padding: 60px 20px;
+      max-width: 440px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .empty-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+    .empty-icon svg { width: 56px; height: 56px; stroke-width: 1.25; }
+    .empty h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .empty p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .empty-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .empty-actions .link {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .empty-actions .link:hover { color: var(--accent); }
+
+    /* ==========================================================
+       FUND DETAIL
+       ========================================================== */
+    .detail-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .detail-head h2 {
+      font-size: 18px;
+      font-weight: 600;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .detail-hero {
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .detail-amount {
+      font-size: clamp(36px, 7vw, 56px);
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+    .detail-sub {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin: 6px 0 20px;
+    }
+    .detail-progress { height: 4px; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.3;
+      margin-top: 18px;
+    }
+    .status-pill svg { width: 16px; height: 16px; stroke-width: 1.75; }
+    .status-pill.onTrack { background: var(--success-subtle); color: var(--success); }
+    .status-pill.behind { background: var(--warning-subtle); color: var(--warning); }
+    .status-pill.completed { background: var(--success-subtle); color: var(--success); }
+    .status-pill.overdue { background: var(--danger-subtle); color: var(--danger); }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 768px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+    .stat-cell {
+      padding: 16px 18px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-cell:nth-child(even) { border-right: none; }
+    .stat-cell:nth-last-child(-n+2) { border-bottom: none; }
+    @media (min-width: 768px) {
+      .stat-cell { border-right: 1px solid var(--border); border-bottom: none; }
+      .stat-cell:nth-child(even) { border-right: 1px solid var(--border); }
+      .stat-cell:last-child { border-right: none; }
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin: 32px 0 12px;
+    }
+    .mini-chart { padding: 16px; height: 200px; }
+    .mini-chart canvas { width: 100% !important; height: 100% !important; }
+
+    .activity-list { display: flex; flex-direction: column; }
+    .activity-row {
+      display: grid;
+      grid-template-columns: 80px 1fr auto auto;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      transition: background 180ms ease;
+    }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .activity-note {
+      font-size: 14px;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .activity-amount {
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .activity-amount.deposit { color: var(--success); }
+    .activity-amount.withdrawal { color: var(--danger); }
+    .activity-amount svg { width: 14px; height: 14px; stroke-width: 2; }
+    .activity-delete {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 180ms ease, background 180ms ease, color 180ms ease;
+    }
+    .activity-row:hover .activity-delete { opacity: 1; }
+    @media (max-width: 640px) { .activity-delete { opacity: 1; } }
+    .activity-delete:hover { background: var(--danger-subtle); color: var(--danger); }
+    .activity-delete svg { width: 14px; height: 14px; stroke-width: 1.75; }
+
+    /* ==========================================================
+       MODALS
+       ========================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 24px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      transform: translateY(16px);
+      transition: transform 220ms var(--easing);
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-backdrop.open .modal { transform: translateY(0); }
+    @media (min-width: 640px) {
+      .modal-backdrop { align-items: center; padding: 24px; }
+      .modal { border-radius: 12px; max-height: 88vh; }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* Form elements */
+    .field { margin-bottom: 16px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .input, .select, .textarea {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-input);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+    .textarea { height: auto; padding: 10px 12px; min-height: 72px; resize: vertical; line-height: 1.5; }
+    .input:focus, .select:focus, .textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+    .input.large {
+      height: 52px;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .input-with-prefix {
+      position: relative;
+    }
+    .input-with-prefix .prefix {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+    .input-with-prefix .input { padding-left: 36px; }
+    .input-with-prefix .input.large { padding-left: 44px; }
+    .input-with-prefix.large .prefix { font-size: 18px; left: 16px; }
+    .helper {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Segmented control */
+    .segmented {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      border-radius: var(--radius-pill);
+      padding: 3px;
+      gap: 2px;
+      width: 100%;
+      height: 40px;
+    }
+    .segmented button {
+      flex: 1;
+      padding: 0 12px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 180ms ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .segmented button.active {
+      background: var(--surface);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    [data-theme="dark"] .segmented button.active { background: var(--surface-subtle); color: var(--text-primary); border: 1px solid var(--border-strong); }
+
+    /* Icon picker */
+    .icon-picker {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+    }
+    @media (max-width: 480px) { .icon-picker { grid-template-columns: repeat(6, 1fr); } }
+    .icon-pick {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 180ms ease;
+    }
+    .icon-pick svg { width: 18px; height: 18px; stroke-width: 1.75; }
+    .icon-pick:hover { background: var(--surface-subtle); color: var(--text-primary); }
+    .icon-pick.active { border-color: var(--accent); color: var(--accent); background: var(--accent-subtle); }
+
+    /* Color picker */
+    .color-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      transition: transform 180ms ease;
+      border: 2px solid transparent;
+    }
+    .color-swatch:hover { transform: scale(1.08); }
+    .color-swatch.active::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--text-primary);
+    }
+
+    /* Advanced disclosure */
+    .advanced-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      padding: 6px 0;
+    }
+    .advanced-toggle:hover { color: var(--text-primary); }
+    .advanced-toggle svg { width: 14px; height: 14px; transition: transform 180ms ease; }
+    .advanced-toggle.open svg { transform: rotate(90deg); }
+    .advanced-body { display: none; padding-top: 8px; }
+    .advanced-body.open { display: block; }
+
+    /* Calculation hint */
+    .calc-hint {
+      background: var(--accent-subtle);
+      border-radius: var(--radius-input);
+      padding: 12px 14px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    /* Modal actions */
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+    .modal-actions .btn { min-width: 96px; }
+    @media (max-width: 480px) {
+      .modal-actions { flex-direction: column-reverse; }
+      .modal-actions .btn { width: 100%; }
+    }
+
+    /* Quick deposit specific */
+    .qd-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .qd-row:last-child { border-bottom: none; }
+    .qd-info { flex: 1; min-width: 0; }
+    .qd-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .qd-cat { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .qd-amount {
+      width: 110px;
+      height: 36px;
+      padding: 0 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: right;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .qd-summary {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0 4px;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .qd-summary .v { font-weight: 600; }
+    .qd-summary.over .v { color: var(--danger); }
+    .qd-summary.exact .v { color: var(--success); }
+    .qd-warning {
+      background: var(--warning-subtle);
+      color: var(--warning);
+      padding: 12px 14px;
+      border-radius: var(--radius-input);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    /* ==========================================================
+       INSIGHTS
+       ========================================================== */
+    .insights-note {
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      border-radius: var(--radius-input);
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .kpis {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 640px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+    .kpi {
+      padding: 18px 20px;
+    }
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin: 4px 0 2px;
+    }
+    .kpi-delta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .kpi-delta.up { color: var(--success); }
+    .kpi-delta.down { color: var(--danger); }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 768px) { .insights-grid { grid-template-columns: 1fr 1fr; } }
+    .chart-card {
+      padding: 20px;
+    }
+    .chart-card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .chart-card .chart-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .chart-wrap {
+      position: relative;
+      height: 220px;
+      margin-top: 16px;
+    }
+    .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+    /* Upcoming list */
+    .upcoming-list { display: flex; flex-direction: column; margin-top: 16px; }
+    .upcoming-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .upcoming-row:last-child { border-bottom: none; }
+    .upcoming-info { flex: 1; min-width: 0; }
+    .upcoming-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .upcoming-date { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .upcoming-meta { text-align: right; font-size: 12px; }
+    .upcoming-days { color: var(--text-primary); font-weight: 500; }
+    .upcoming-pct { color: var(--text-muted); margin-top: 1px; }
+
+    /* ==========================================================
+       SETTINGS
+       ========================================================== */
+    .settings-group { margin-bottom: 32px; }
+    .settings-group-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 56px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-label { flex: 1; min-width: 0; }
+    .settings-row-label .title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .settings-row-label .desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .settings-row .control { flex-shrink: 0; }
+    .settings-row .control .select { width: auto; min-width: 180px; }
+    .settings-row .control .segmented { width: auto; }
+
+    /* ==========================================================
+       MENU (kebab dropdown)
+       ========================================================== */
+    .menu {
+      position: absolute;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
+      min-width: 180px;
+      z-index: 60;
+      padding: 6px;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--text-primary);
+      width: 100%;
+      text-align: left;
+      transition: background 180ms ease;
+    }
+    .menu-item:hover { background: var(--surface-subtle); }
+    .menu-item.danger { color: var(--danger); }
+    .menu-item svg { width: 16px; height: 16px; stroke-width: 1.75; }
+
+    /* ==========================================================
+       TOAST
+       ========================================================== */
+    .toast-wrap {
+      position: fixed;
+      bottom: calc(var(--navbar-h) + 16px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    @media (min-width: 1024px) {
+      .toast-wrap { bottom: 24px; left: auto; right: 24px; transform: none; }
+    }
+    .toast {
+      background: var(--surface);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      animation: toast-in 180ms ease-out, toast-out 200ms ease 2.4s forwards;
+    }
+    .toast.success { color: var(--success); border-color: var(--success-subtle); }
+    .toast.error { color: var(--danger); border-color: var(--danger-subtle); }
+    .toast svg { width: 14px; height: 14px; stroke-width: 1.75; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toast-out {
+      to { opacity: 0; transform: translateY(6px); }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="app-shell">
+    <!-- ====== Bottom nav / desktop sidebar ====== -->
+    <nav class="nav-bar" aria-label="Main">
+      <div class="sidebar-brand">Sinking Funds</div>
+      <button class="nav-item active" data-view="home"><i data-lucide="home"></i><span>Home</span></button>
+      <button class="nav-item" data-view="insights"><i data-lucide="bar-chart-3"></i><span>Insights</span></button>
+      <button class="nav-fab" id="fabAdd" aria-label="New fund"><i data-lucide="plus"></i></button>
+      <button class="nav-item" data-view="funds"><i data-lucide="layers"></i><span>Funds</span></button>
+      <button class="nav-item" data-view="settings"><i data-lucide="settings"></i><span>Settings</span></button>
+    </nav>
+
+    <div class="app-content-wrap">
+      <header class="app-header">
+        <span class="brand">Sinking Funds</span>
+        <div class="header-actions" id="headerActions"></div>
+      </header>
+      <header class="desktop-header">
+        <span class="brand">Sinking Funds</span>
+        <div style="flex:1"></div>
+        <div class="header-actions" id="headerActionsDesktop"></div>
+      </header>
+
+      <main>
+        <section id="view-home" class="view active" aria-label="Home"></section>
+        <section id="view-detail" class="view" aria-label="Fund detail"></section>
+        <section id="view-insights" class="view" aria-label="Insights"></section>
+        <section id="view-funds" class="view" aria-label="All funds"></section>
+        <section id="view-settings" class="view" aria-label="Settings"></section>
+      </main>
+    </div>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <script>
+  /* ==============================================================
+     SINKING FUND TRACKER
+     Clean · Minimal · Multi-currency · Light first · Inter only
+     ============================================================== */
+  (function() {
+    'use strict';
+
+    // === Constants ===
+    const STORAGE_KEY = 'sft_data_v1';
+    const INSTALL_DISMISS_KEY = 'sft_install_dismissed';
+    const APP_VERSION = '1.0.0';
+
+    /**
+     * Single source of truth for currency definitions.
+     * 15 internationally common currencies. PKR intentionally excluded.
+     */
+    const CURRENCIES = [
+      { code: 'USD', symbol: '$',   name: 'US Dollar',          position: 'prefix', decimals: 2 },
+      { code: 'EUR', symbol: '€',   name: 'Euro',               position: 'prefix', decimals: 2 },
+      { code: 'GBP', symbol: '£',   name: 'British Pound',      position: 'prefix', decimals: 2 },
+      { code: 'CAD', symbol: 'C$',  name: 'Canadian Dollar',    position: 'prefix', decimals: 2 },
+      { code: 'AUD', symbol: 'A$',  name: 'Australian Dollar',  position: 'prefix', decimals: 2 },
+      { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar', position: 'prefix', decimals: 2 },
+      { code: 'JPY', symbol: '¥',   name: 'Japanese Yen',       position: 'prefix', decimals: 0 },
+      { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc',        position: 'prefix', decimals: 2 },
+      { code: 'SEK', symbol: 'kr',  name: 'Swedish Krona',      position: 'suffix', decimals: 2 },
+      { code: 'NOK', symbol: 'kr',  name: 'Norwegian Krone',    position: 'suffix', decimals: 2 },
+      { code: 'DKK', symbol: 'kr',  name: 'Danish Krone',       position: 'suffix', decimals: 2 },
+      { code: 'SGD', symbol: 'S$',  name: 'Singapore Dollar',   position: 'prefix', decimals: 2 },
+      { code: 'HKD', symbol: 'HK$', name: 'Hong Kong Dollar',   position: 'prefix', decimals: 2 },
+      { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham',         position: 'prefix', decimals: 2 },
+      { code: 'INR', symbol: '₹',   name: 'Indian Rupee',       position: 'prefix', decimals: 2 }
+    ];
+
+    const CATEGORIES = [
+      { id: 'Travel',     icon: 'plane' },
+      { id: 'Emergency',  icon: 'shield' },
+      { id: 'Gifts',      icon: 'gift' },
+      { id: 'Vehicle',    icon: 'car' },
+      { id: 'Education',  icon: 'graduation-cap' },
+      { id: 'Home',       icon: 'home' },
+      { id: 'Health',     icon: 'heart-pulse' },
+      { id: 'Wedding',    icon: 'heart' },
+      { id: 'Technology', icon: 'laptop' },
+      { id: 'Other',      icon: 'wallet' }
+    ];
+
+    const ICON_CHOICES = [
+      'plane','shield','gift','car','graduation-cap','home','heart-pulse','heart',
+      'laptop','wallet','briefcase','sprout','book','baby','dog','camera'
+    ];
+
+    const COLOR_SWATCHES = [
+      '#0F766E','#0E7490','#4338CA','#7C3AED',
+      '#BE185D','#B45309','#15803D','#475569'
+    ];
+
+    // === Utils ===
+    const U = {
+      uuid() {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      },
+      todayISO() { return new Date().toISOString().slice(0, 10); },
+      parseDate(s) { return s ? new Date(s + 'T00:00:00') : null; },
+      daysBetween(a, b) { return Math.round((b.getTime() - a.getTime()) / 86400000); },
+
+      /**
+       * Look up a currency definition by code. Falls back to USD if not found.
+       */
+      currency(code) {
+        return CURRENCIES.find(x => x.code === code) || CURRENCIES[0];
+      },
+
+      /**
+       * Format an amount in the given currency. Uses Intl.NumberFormat.
+       * - JPY: always 0 decimals
+       * - Others: up to 2 decimals, but show 0 decimals for whole numbers
+       * Single-character symbols ($,€,£,¥,₹) attach tightly; multi-char get a space.
+       */
+      formatMoney(amount, currencyCode) {
+        const c = U.currency(currencyCode || State.defaultCurrency());
+        const abs = Math.abs(amount);
+        const isInt = Math.abs(abs - Math.round(abs)) < 0.005;
+        const minDec = c.decimals === 0 ? 0 : (isInt ? 0 : c.decimals);
+        const maxDec = c.decimals;
+        const formatted = new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: minDec,
+          maximumFractionDigits: maxDec
+        }).format(abs);
+        const sign = amount < 0 ? '-' : '';
+        const tight = /^[\$€£¥₹]$/.test(c.symbol);
+        if (c.position === 'prefix') {
+          return sign + (tight ? c.symbol + formatted : c.symbol + ' ' + formatted);
+        }
+        return sign + formatted + ' ' + c.symbol;
+      },
+
+      /**
+       * Compact money formatter for chart axes (1.2k, 3.4M).
+       */
+      formatMoneyShort(amount, currencyCode) {
+        const c = U.currency(currencyCode || State.defaultCurrency());
+        const abs = Math.abs(amount);
+        let formatted;
+        if (abs >= 1_000_000) formatted = (abs / 1_000_000).toFixed(1) + 'M';
+        else if (abs >= 10_000) formatted = (abs / 1_000).toFixed(0) + 'k';
+        else formatted = Math.round(abs).toLocaleString('en-US');
+        const sign = amount < 0 ? '-' : '';
+        const tight = /^[\$€£¥₹]$/.test(c.symbol);
+        if (c.position === 'prefix') {
+          return sign + (tight ? c.symbol + formatted : c.symbol + ' ' + formatted);
+        }
+        return sign + formatted + ' ' + c.symbol;
+      },
+
+      formatDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso + (iso.includes('T') ? '' : 'T00:00:00'));
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      },
+      formatDateShort(iso) {
+        if (!iso) return '';
+        const d = new Date(iso + (iso.includes('T') ? '' : 'T00:00:00'));
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      },
+      formatRelative(iso) {
+        if (!iso) return '';
+        const d = new Date(iso + (iso.includes('T') ? '' : 'T00:00:00'));
+        const now = new Date(); now.setHours(0,0,0,0);
+        const target = new Date(d); target.setHours(0,0,0,0);
+        const diff = Math.round((now - target) / 86400000);
+        if (diff === 0) return 'Today';
+        if (diff === 1) return 'Yesterday';
+        if (diff > 1 && diff < 7) return diff + 'd ago';
+        return U.formatDateShort(iso);
+      },
+      escape(s) {
+        if (s == null) return '';
+        return String(s).replace(/[&<>"']/g, m => ({
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[m]));
+      },
+      clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); },
+      hexToRgba(hex, a) {
+        const h = hex.replace('#','');
+        const full = h.length === 3 ? h.split('').map(x => x+x).join('') : h;
+        const n = parseInt(full, 16);
+        return `rgba(${(n>>16)&255}, ${(n>>8)&255}, ${n&255}, ${a})`;
+      },
+      categoryIcon(name) {
+        const c = CATEGORIES.find(x => x.id === name);
+        return c ? c.icon : 'wallet';
+      },
+      renderIcons() { if (window.lucide) window.lucide.createIcons(); }
+    };
+
+    // === Store ===
+    const Store = {
+      _defaults() {
+        return {
+          version: 1,
+          settings: {
+            currency: 'USD',
+            theme: 'light',
+            weekStart: 'monday',
+            firstUseDate: new Date().toISOString()
+          },
+          funds: [],
+          contributions: []
+        };
+      },
+      load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return Store._defaults();
+          const data = JSON.parse(raw);
+          const def = Store._defaults();
+          const merged = {
+            version: data.version || 1,
+            settings: Object.assign(def.settings, data.settings || {}),
+            funds: Array.isArray(data.funds) ? data.funds : [],
+            contributions: Array.isArray(data.contributions) ? data.contributions : []
+          };
+          // Defensive: ensure each fund has a currency
+          merged.funds.forEach(f => { if (!f.currency) f.currency = merged.settings.currency || 'USD'; });
+          return merged;
+        } catch (e) {
+          console.warn('Store.load: defaults', e);
+          return Store._defaults();
+        }
+      },
+      save(data) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+        catch (e) { Toast.show('Could not save', 'error'); console.error(e); }
+      },
+      export() {
+        const data = Store.load();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sinking-funds-backup-${U.todayISO()}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      },
+      import(file) {
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = e => {
+            try {
+              const d = JSON.parse(e.target.result);
+              if (!d.version || !Array.isArray(d.funds) || !Array.isArray(d.contributions)) throw new Error('bad file');
+              // Ensure currencies present
+              d.funds.forEach(f => { if (!f.currency) f.currency = d.settings?.currency || 'USD'; });
+              Store.save(d);
+              resolve(d);
+            } catch (err) { reject(err); }
+          };
+          r.onerror = () => reject(new Error('read failed'));
+          r.readAsText(file);
+        });
+      },
+      reset() { localStorage.removeItem(STORAGE_KEY); },
+
+      /**
+       * Apply a new default currency app-wide AND rewrite every fund's currency
+       * to match. This is intentional per spec.
+       */
+      changeDefaultCurrency(code) {
+        if (!CURRENCIES.find(c => c.code === code)) return false;
+        State.data.settings.currency = code;
+        State.data.funds.forEach(f => { f.currency = code; });
+        Store.save(State.data);
+        return true;
+      },
+
+      /**
+       * Load the 5 demo funds with realistic contribution history.
+       * Always uses the *current* default currency for the funds.
+       */
+      loadDemo() {
+        const cur = State.defaultCurrency();
+        const today = new Date();
+        const iso = (d) => d.toISOString().slice(0, 10);
+        const ago = (n) => { const d = new Date(today); d.setMonth(d.getMonth() - n); return iso(d); };
+        const ahead = (n) => { const d = new Date(today); d.setMonth(d.getMonth() + n); return iso(d); };
+
+        const funds = [
+          { id: U.uuid(), name: 'Emergency Fund',   icon: 'shield', color: '#0F766E', category: 'Emergency',  currency: cur,
+            targetAmount: 5000, targetDate: ahead(12), startDate: ago(6),  frequency: 'monthly',
+            notes: '3 months of expenses', archived: false, createdAt: new Date().toISOString() },
+          { id: U.uuid(), name: 'Holiday Gifts',    icon: 'gift',   color: '#BE185D', category: 'Gifts',      currency: cur,
+            targetAmount: 800,  targetDate: ahead(3),  startDate: ago(4),  frequency: 'monthly',
+            notes: 'For family & close friends', archived: false, createdAt: new Date().toISOString() },
+          { id: U.uuid(), name: 'Family Vacation',  icon: 'plane',  color: '#0E7490', category: 'Travel',     currency: cur,
+            targetAmount: 3500, targetDate: ahead(8),  startDate: ago(2),  frequency: 'monthly',
+            notes: 'Coastal trip', archived: false, createdAt: new Date().toISOString() },
+          { id: U.uuid(), name: 'New Laptop',       icon: 'laptop', color: '#4338CA', category: 'Technology', currency: cur,
+            targetAmount: 2200, targetDate: ahead(6),  startDate: ago(8),  frequency: 'biweekly',
+            notes: 'For freelance work', archived: false, createdAt: new Date().toISOString() },
+          { id: U.uuid(), name: 'Car Insurance',    icon: 'car',    color: '#B45309', category: 'Vehicle',    currency: cur,
+            targetAmount: 900,  targetDate: ahead(4),  startDate: ago(8),  frequency: 'monthly',
+            notes: 'Annual renewal', archived: false, createdAt: new Date().toISOString() }
+        ];
+
+        const contribs = [];
+        const distribute = (fundId, totalAmount, monthsBack, count, includeWithdrawal) => {
+          const per = totalAmount / count;
+          for (let i = 0; i < count; i++) {
+            const back = monthsBack - Math.floor((i / count) * monthsBack);
+            const d = new Date(today);
+            d.setMonth(d.getMonth() - back);
+            d.setDate(5 + (i % 20));
+            const variance = 0.85 + Math.random() * 0.3;
+            contribs.push({
+              id: U.uuid(), fundId,
+              amount: Math.round(per * variance * 100) / 100,
+              date: iso(d),
+              type: 'deposit', note: ''
+            });
+          }
+          if (includeWithdrawal && contribs.length) {
+            const d = new Date(today); d.setMonth(d.getMonth() - 1); d.setDate(15);
+            contribs.push({
+              id: U.uuid(), fundId,
+              amount: Math.round(per * 0.3 * 100) / 100,
+              date: iso(d),
+              type: 'withdrawal', note: 'Unexpected expense'
+            });
+          }
+        };
+
+        distribute(funds[0].id, 1750, 6, 6, false);
+        distribute(funds[1].id, 480,  4, 4, false);
+        distribute(funds[2].id, 700,  2, 3, false);
+        distribute(funds[3].id, 1650, 8, 14, true);
+        distribute(funds[4].id, 810,  8, 8, false);
+
+        State.data.funds = funds;
+        State.data.contributions = contribs;
+        Store.save(State.data);
+      }
+    };
+
+    // === State ===
+    const State = {
+      data: null,
+      view: 'home',
+      currentFundId: null,
+      filter: 'all',
+      search: '',
+      load() { State.data = Store.load(); return State.data; },
+      persist() { Store.save(State.data); },
+      defaultCurrency() { return State.data?.settings?.currency || 'USD'; },
+      fundCurrency(fundId) {
+        const f = State.getFund(fundId);
+        return f?.currency || State.defaultCurrency();
+      },
+      getFund(id) { return State.data.funds.find(f => f.id === id); },
+      contributionsFor(id) {
+        return State.data.contributions
+          .filter(c => c.fundId === id)
+          .sort((a, b) => a.date.localeCompare(b.date));
+      },
+      balance(id) {
+        return State.contributionsFor(id).reduce(
+          (s, c) => s + (c.type === 'withdrawal' ? -c.amount : c.amount),
+          0
+        );
+      },
+      /** Distinct currency codes among active funds. */
+      activeCurrencies() {
+        const set = new Set();
+        State.data.funds.filter(f => !f.archived).forEach(f => set.add(f.currency || State.defaultCurrency()));
+        return Array.from(set);
+      }
+    };
+
+    // === Calculations ===
+    const Calc = {
+      periods(freq, startDate, endDate) {
+        const days = (endDate.getTime() - startDate.getTime()) / 86400000;
+        if (freq === 'weekly') return days / 7;
+        if (freq === 'biweekly') return days / 14;
+        return days / 30.4375;
+      },
+      periodLabel(freq) {
+        return freq === 'weekly' ? 'week' : freq === 'biweekly' ? 'fortnight' : 'month';
+      },
+      analyze(fund) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const start = U.parseDate(fund.startDate) || today;
+        const end = U.parseDate(fund.targetDate);
+        const balance = State.balance(fund.id);
+        const target = Math.max(0, Number(fund.targetAmount) || 0);
+        const remaining = Math.max(0, target - balance);
+        const daysLeft = end ? U.daysBetween(today, end) : 0;
+        const totalPeriods = end ? Math.max(0.01, Calc.periods(fund.frequency, start, end)) : 0;
+        const periodsLeft = end ? Math.max(0, Calc.periods(fund.frequency, today, end)) : 0;
+        const periodsElapsed = Math.max(0, totalPeriods - periodsLeft);
+        const expectedByNow = totalPeriods > 0 ? (target / totalPeriods) * periodsElapsed : 0;
+        const requiredPerPeriod = periodsLeft > 0.001 ? remaining / Math.max(1, periodsLeft) : remaining;
+        const pct = target > 0 ? U.clamp((balance / target) * 100, 0, 100) : 0;
+        const deficit = Math.max(0, expectedByNow - balance);
+
+        let status;
+        if (balance >= target && target > 0) status = 'completed';
+        else if (end && today > end) status = 'overdue';
+        else if (balance >= expectedByNow - 0.01) status = 'onTrack';
+        else status = 'behind';
+
+        return { balance, target, remaining, daysLeft, totalPeriods, periodsLeft, periodsElapsed,
+                 expectedByNow, requiredPerPeriod, pct, status, deficit };
+      }
+    };
+
+    // === Toast ===
+    const Toast = {
+      show(message, type) {
+        const wrap = document.getElementById('toastWrap');
+        const el = document.createElement('div');
+        el.className = 'toast ' + (type || '');
+        const icon = type === 'success' ? 'check' : type === 'error' ? 'x' : 'info';
+        el.innerHTML = `<i data-lucide="${icon}"></i><span>${U.escape(message)}</span>`;
+        wrap.appendChild(el);
+        U.renderIcons();
+        setTimeout(() => el.remove(), 2700);
+      }
+    };
+
+    // === Renderers ===
+    const Render = {
+      /** Render dynamic header action area (mobile + desktop). */
+      header() {
+        const hasFunds = State.data.funds.length > 0;
+        const themeIcon = (State.data.settings.theme === 'dark') ? 'sun' : 'moon';
+        const install = (window.__sftDeferredPrompt && !localStorage.getItem(INSTALL_DISMISS_KEY))
+          ? `<button class="install-pill" data-action="install"><i data-lucide="download"></i>Install</button>` : '';
+        const demo = !hasFunds
+          ? `<button class="demo-pill" data-action="load-demo">Load demo data</button>` : '';
+        const html = `
+          ${demo}
+          ${install}
+          <button class="icon-btn" data-action="toggle-theme" aria-label="Toggle theme"><i data-lucide="${themeIcon}"></i></button>
+          <button class="icon-btn" data-view-link="settings" aria-label="Settings"><i data-lucide="settings"></i></button>
+        `;
+        document.getElementById('headerActions').innerHTML = html;
+        document.getElementById('headerActionsDesktop').innerHTML = html;
+        U.renderIcons();
+      },
+
+      home() {
+        const wrap = document.getElementById('view-home');
+        const allFunds = State.data.funds;
+        const active = allFunds.filter(f => !f.archived);
+
+        if (allFunds.length === 0) {
+          wrap.innerHTML = Render._empty();
+          U.renderIcons();
+          return;
+        }
+
+        const analyses = active.map(f => ({ fund: f, a: Calc.analyze(f) }));
+        const defaultCur = State.defaultCurrency();
+
+        // Group totals by currency
+        const byCur = {};
+        analyses.forEach(x => {
+          const code = x.fund.currency || defaultCur;
+          if (!byCur[code]) byCur[code] = { saved: 0, target: 0 };
+          byCur[code].saved += x.a.balance;
+          byCur[code].target += x.a.target;
+        });
+        const currencies = Object.keys(byCur);
+
+        // Pick the dominant currency (highest saved) for the headline; default to settings.currency
+        let dominant = defaultCur;
+        if (currencies.length > 0) {
+          dominant = currencies.includes(defaultCur)
+            ? defaultCur
+            : currencies.sort((a, b) => byCur[b].saved - byCur[a].saved)[0];
+        }
+        const dom = byCur[dominant] || { saved: 0, target: 0 };
+        const otherCurrencies = currencies.filter(c => c !== dominant);
+        const overallPct = dom.target > 0 ? U.clamp((dom.saved / dom.target) * 100, 0, 100) : 0;
+
+        const onTrack = analyses.filter(x => x.a.status === 'onTrack').length;
+        const behind = analyses.filter(x => x.a.status === 'behind' || x.a.status === 'overdue').length;
+        const completed = analyses.filter(x => x.a.status === 'completed').length;
+
+        const mixedNote = otherCurrencies.length > 0
+          ? `<div class="hero-mixed-note">+ ${otherCurrencies.map(c => U.formatMoney(byCur[c].saved, c)).join(' · ')} in other currencies</div>`
+          : '';
+
+        wrap.innerHTML = `
+          <div class="card hero">
+            <div class="hero-label">Total saved</div>
+            <div class="hero-amount tabular">${U.formatMoney(dom.saved, dominant)}</div>
+            <div class="hero-subline">of ${U.formatMoney(dom.target, dominant)} target</div>
+            ${mixedNote}
+            <div class="hero-progress progress"><div class="progress-fill" style="width:${overallPct}%"></div></div>
+            <div class="hero-stats">
+              <span><span class="v">${onTrack}</span> on track</span>
+              <span class="sep">·</span>
+              <span><span class="v">${behind}</span> behind</span>
+              <span class="sep">·</span>
+              <span><span class="v">${completed}</span> completed</span>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-primary" data-action="add-fund"><i data-lucide="plus"></i> New fund</button>
+            <button class="btn btn-secondary" data-action="quick-deposit"><i data-lucide="wallet"></i> Quick deposit</button>
+          </div>
+
+          <div class="tabs" role="tablist">
+            ${['all','onTrack','behind','completed','archived'].map(f => `
+              <button class="tab ${State.filter === f ? 'active' : ''}" data-filter="${f}" role="tab">${({all:'All',onTrack:'On track',behind:'Behind',completed:'Completed',archived:'Archived'})[f]}</button>
+            `).join('')}
+          </div>
+
+          <div class="search-row">
+            <i data-lucide="search"></i>
+            <input id="searchInput" class="search-input" type="search" placeholder="Search funds" value="${U.escape(State.search)}" aria-label="Search funds" />
+          </div>
+
+          <div class="fund-grid" id="fundGrid">${Render._fundCards(analyses)}</div>
+        `;
+        U.renderIcons();
+      },
+
+      _fundCards(analyses) {
+        const list = Render._filterSearch(analyses);
+        if (list.length === 0) {
+          return `<p style="grid-column:1/-1;color:var(--text-secondary);text-align:center;padding:40px 20px;font-size:14px;">No funds match.</p>`;
+        }
+        return list.map(x => Render._fundCard(x.fund, x.a)).join('');
+      },
+
+      _filterSearch(analyses) {
+        let list = analyses.slice();
+        const q = State.search.trim().toLowerCase();
+        if (q) {
+          list = list.filter(x =>
+            x.fund.name.toLowerCase().includes(q) ||
+            (x.fund.category || '').toLowerCase().includes(q)
+          );
+        }
+        if (State.filter === 'all') return list;
+        if (State.filter === 'archived') {
+          let arch = State.data.funds.filter(f => f.archived).map(f => ({ fund: f, a: Calc.analyze(f) }));
+          if (q) arch = arch.filter(x => x.fund.name.toLowerCase().includes(q) || (x.fund.category || '').toLowerCase().includes(q));
+          return arch;
+        }
+        if (State.filter === 'onTrack') return list.filter(x => x.a.status === 'onTrack');
+        if (State.filter === 'behind') return list.filter(x => x.a.status === 'behind' || x.a.status === 'overdue');
+        if (State.filter === 'completed') return list.filter(x => x.a.status === 'completed');
+        return list;
+      },
+
+      _fundCard(fund, a) {
+        const color = fund.color || '#0F766E';
+        const cur = fund.currency || State.defaultCurrency();
+        const iconBg = U.hexToRgba(color, 0.10);
+        const lbl = Calc.periodLabel(fund.frequency);
+        const fillClass = a.status === 'behind' ? 'warning' : a.status === 'overdue' ? 'danger' : a.status === 'completed' ? 'success' : '';
+        const daysLine = a.status === 'completed'
+          ? 'Goal reached'
+          : a.daysLeft < 0
+            ? `${Math.abs(a.daysLeft)} days overdue`
+            : `${a.daysLeft} days left`;
+        const neededLine = a.status === 'completed'
+          ? '—'
+          : `${U.formatMoneyShort(a.requiredPerPeriod, cur)} / ${lbl}`;
+        return `
+          <button class="fund-card" data-fund-id="${fund.id}">
+            <div class="fund-card-top">
+              <span class="fund-icon" style="background:${iconBg};color:${color};">
+                <i data-lucide="${U.escape(fund.icon || U.categoryIcon(fund.category))}"></i>
+              </span>
+              <span class="fund-status-dot ${a.status}" aria-hidden="true"></span>
+            </div>
+            <div>
+              <div class="fund-name">${U.escape(fund.name)}</div>
+              <div class="fund-category">${U.escape(fund.category || 'Other')}</div>
+            </div>
+            <div class="fund-amounts">
+              <span class="fund-saved tabular">${U.formatMoney(a.balance, cur)}</span>
+              <span class="fund-target tabular">/ ${U.formatMoney(a.target, cur)}</span>
+            </div>
+            <div class="progress"><div class="progress-fill ${fillClass}" style="width:${a.pct}%"></div></div>
+            <div class="fund-footer">
+              <span>${daysLine}</span>
+              <span class="needed tabular">${neededLine}</span>
+            </div>
+          </button>
+        `;
+      },
+
+      _empty() {
+        return `
+          <div class="empty">
+            <div class="empty-icon"><i data-lucide="piggy-bank"></i></div>
+            <h2>Start saving with purpose</h2>
+            <p>Create a fund for any goal — vacations, emergencies, gifts, big purchases.</p>
+            <div class="empty-actions">
+              <button class="btn btn-primary" data-action="add-fund"><i data-lucide="plus"></i> Create your first fund</button>
+              <a href="#" class="link" data-action="load-demo">or load demo data to explore</a>
+            </div>
+          </div>
+        `;
+      },
+
+      detail() {
+        const wrap = document.getElementById('view-detail');
+        const fund = State.getFund(State.currentFundId);
+        if (!fund) {
+          wrap.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:48px;">Fund not found.</p>';
+          return;
+        }
+        const a = Calc.analyze(fund);
+        const lbl = Calc.periodLabel(fund.frequency);
+        const cur = fund.currency || State.defaultCurrency();
+        const fillClass = a.status === 'behind' ? 'warning' : a.status === 'overdue' ? 'danger' : a.status === 'completed' ? 'success' : '';
+
+        let pillHtml = '';
+        if (a.status === 'completed') {
+          pillHtml = `<div class="status-pill completed"><i data-lucide="check-circle-2"></i>Goal reached.</div>`;
+        } else if (a.status === 'overdue') {
+          pillHtml = `<div class="status-pill overdue"><i data-lucide="alarm-clock"></i>Past deadline. ${U.formatMoney(a.remaining, cur)} short.</div>`;
+        } else if (a.status === 'behind') {
+          pillHtml = `<div class="status-pill behind"><i data-lucide="trending-up"></i>Behind by ${U.formatMoney(a.deficit, cur)}. Save ${U.formatMoney(a.requiredPerPeriod, cur)}/${lbl} to catch up.</div>`;
+        } else {
+          pillHtml = `<div class="status-pill onTrack"><i data-lucide="target"></i>On track. ${U.formatMoney(a.requiredPerPeriod, cur)} needed this ${lbl}.</div>`;
+        }
+
+        const contribs = State.contributionsFor(fund.id).slice().reverse();
+        const activity = contribs.length
+          ? contribs.map(c => `
+              <div class="activity-row" data-contrib-id="${c.id}">
+                <span class="activity-date">${U.formatRelative(c.date)}</span>
+                <span class="activity-note">${U.escape(c.note || (c.type === 'withdrawal' ? 'Withdrawal' : 'Deposit'))}</span>
+                <span class="activity-amount ${c.type} tabular">
+                  <i data-lucide="${c.type === 'withdrawal' ? 'arrow-down-left' : 'arrow-up-right'}"></i>
+                  ${U.formatMoney(c.amount, cur)}
+                </span>
+                <button class="activity-delete" data-action="delete-contrib" data-contrib-id="${c.id}" aria-label="Delete">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </div>
+            `).join('')
+          : `<p style="color:var(--text-secondary);text-align:center;padding:24px;font-size:14px;">No contributions yet.</p>`;
+
+        wrap.innerHTML = `
+          <div class="detail-head">
+            <button class="icon-btn" data-action="back-home" aria-label="Back"><i data-lucide="chevron-left"></i></button>
+            <h2>${U.escape(fund.name)}</h2>
+            <button class="icon-btn" data-action="fund-menu" data-fund-id="${fund.id}" aria-label="Options"><i data-lucide="more-horizontal"></i></button>
+          </div>
+
+          <div class="card detail-hero">
+            <div class="detail-amount tabular">${U.formatMoney(a.balance, cur)}</div>
+            <div class="detail-sub">of ${U.formatMoney(a.target, cur)} · ${Math.round(a.pct)}% complete</div>
+            <div class="detail-progress progress"><div class="progress-fill ${fillClass}" style="width:${a.pct}%"></div></div>
+            ${pillHtml}
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-cell"><div class="stat-label">Saved</div><div class="stat-value tabular">${U.formatMoney(a.balance, cur)}</div></div>
+            <div class="stat-cell"><div class="stat-label">Remaining</div><div class="stat-value tabular">${U.formatMoney(a.remaining, cur)}</div></div>
+            <div class="stat-cell"><div class="stat-label">${lbl[0].toUpperCase() + lbl.slice(1)}ly needed</div><div class="stat-value tabular">${U.formatMoney(a.requiredPerPeriod, cur)}</div></div>
+            <div class="stat-cell"><div class="stat-label">Days left</div><div class="stat-value tabular">${Math.max(0, a.daysLeft)}</div></div>
+          </div>
+
+          <button class="btn btn-primary btn-block" data-action="add-contribution" data-fund-id="${fund.id}">
+            <i data-lucide="plus"></i> Add contribution
+          </button>
+
+          <div class="section-title">Balance over time</div>
+          <div class="card mini-chart"><canvas id="detailChart" aria-label="Balance chart"></canvas></div>
+
+          <div class="section-title">Activity</div>
+          <div class="activity-list">${activity}</div>
+        `;
+        U.renderIcons();
+        Charts.detail(fund, fund.color || '#0F766E');
+      },
+
+      insights() {
+        const wrap = document.getElementById('view-insights');
+        const allFunds = State.data.funds;
+        const active = allFunds.filter(f => !f.archived);
+        if (allFunds.length === 0) {
+          wrap.innerHTML = `
+            <div class="empty">
+              <div class="empty-icon"><i data-lucide="bar-chart-3"></i></div>
+              <h2>Nothing to show yet</h2>
+              <p>Create funds and contributions to see trends here.</p>
+            </div>
+          `;
+          U.renderIcons();
+          return;
+        }
+
+        const defaultCur = State.defaultCurrency();
+        // For aggregates: only count funds whose currency matches the default
+        const inDefault = active.filter(f => (f.currency || defaultCur) === defaultCur);
+        const otherCurCount = active.length - inDefault.length;
+
+        const totalSaved = inDefault.reduce((s, f) => s + State.balance(f.id), 0);
+        const now = new Date();
+        const lastMonth = new Date(now); lastMonth.setMonth(now.getMonth() - 1);
+        const lastMonthKey = lastMonth.toISOString().slice(0, 7);
+        const thisMonthKey = now.toISOString().slice(0, 7);
+        const inDefaultIds = new Set(inDefault.map(f => f.id));
+        let thisMonthSum = 0, lastMonthSum = 0;
+        State.data.contributions.forEach(c => {
+          if (!inDefaultIds.has(c.fundId)) return;
+          const k = c.date.slice(0, 7);
+          const v = c.type === 'withdrawal' ? -c.amount : c.amount;
+          if (k === thisMonthKey) thisMonthSum += v;
+          else if (k === lastMonthKey) lastMonthSum += v;
+        });
+        const monthlyDelta = thisMonthSum - lastMonthSum;
+
+        const totalsByMonth = {};
+        State.data.contributions.forEach(c => {
+          if (!inDefaultIds.has(c.fundId)) return;
+          const k = c.date.slice(0, 7);
+          totalsByMonth[k] = (totalsByMonth[k] || 0) + (c.type === 'withdrawal' ? -c.amount : c.amount);
+        });
+        const allMonths = Object.keys(totalsByMonth);
+        const avgMonthly = allMonths.length ? Object.values(totalsByMonth).reduce((s, v) => s + v, 0) / allMonths.length : 0;
+
+        const upcoming = active.slice()
+          .filter(f => f.targetDate)
+          .sort((a, b) => a.targetDate.localeCompare(b.targetDate))
+          .slice(0, 5);
+
+        const mixedNote = otherCurCount > 0
+          ? `<div class="insights-note">Totals shown in ${defaultCur}. ${otherCurCount} fund${otherCurCount !== 1 ? 's' : ''} in other currencies excluded from these aggregates.</div>`
+          : '';
+
+        wrap.innerHTML = `
+          <h2 style="font-size:22px;font-weight:600;letter-spacing:-0.01em;margin-bottom:6px;">Insights</h2>
+          <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">How your funds are trending.</p>
+          ${mixedNote}
+
+          <div class="kpis">
+            <div class="card kpi">
+              <div class="kpi-label">Total saved</div>
+              <div class="kpi-value tabular">${U.formatMoney(totalSaved, defaultCur)}</div>
+              <div class="kpi-delta ${monthlyDelta >= 0 ? 'up' : 'down'}">
+                ${monthlyDelta >= 0 ? '+' : ''}${U.formatMoneyShort(monthlyDelta, defaultCur)} vs last month
+              </div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi-label">Active funds</div>
+              <div class="kpi-value tabular">${active.length}</div>
+              <div class="kpi-delta">${allFunds.filter(f => f.archived).length} archived</div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi-label">Avg monthly</div>
+              <div class="kpi-value tabular">${U.formatMoney(avgMonthly, defaultCur)}</div>
+              <div class="kpi-delta">across ${defaultCur} funds</div>
+            </div>
+          </div>
+
+          <div class="insights-grid">
+            <div class="card chart-card">
+              <h3>Total savings over time</h3>
+              <div class="chart-sub">Cumulative balance (${defaultCur})</div>
+              <div class="chart-wrap"><canvas id="chartTotal"></canvas></div>
+            </div>
+            <div class="card chart-card">
+              <h3>Allocation by category</h3>
+              <div class="chart-sub">Share of current savings (${defaultCur})</div>
+              <div class="chart-wrap"><canvas id="chartAlloc"></canvas></div>
+            </div>
+            <div class="card chart-card">
+              <h3>Monthly contributions</h3>
+              <div class="chart-sub">Net deposits, last 12 months</div>
+              <div class="chart-wrap"><canvas id="chartMonthly"></canvas></div>
+            </div>
+            <div class="card chart-card">
+              <h3>Upcoming deadlines</h3>
+              <div class="chart-sub">Next 5 funds by target date</div>
+              <div class="upcoming-list">
+                ${upcoming.length ? upcoming.map(f => {
+                  const a = Calc.analyze(f);
+                  return `
+                    <div class="upcoming-row">
+                      <span class="fund-icon" style="width:32px;height:32px;border-radius:8px;background:${U.hexToRgba(f.color || '#0F766E', 0.10)};color:${f.color || '#0F766E'};">
+                        <i data-lucide="${U.escape(f.icon || U.categoryIcon(f.category))}"></i>
+                      </span>
+                      <div class="upcoming-info">
+                        <div class="upcoming-name">${U.escape(f.name)}</div>
+                        <div class="upcoming-date">${U.formatDate(f.targetDate)}</div>
+                      </div>
+                      <div class="upcoming-meta">
+                        <div class="upcoming-days tabular">${a.daysLeft < 0 ? Math.abs(a.daysLeft) + 'd overdue' : a.daysLeft + 'd left'}</div>
+                        <div class="upcoming-pct tabular">${Math.round(a.pct)}% saved</div>
+                      </div>
+                    </div>
+                  `;
+                }).join('') : `<p style="color:var(--text-secondary);font-size:14px;text-align:center;padding:20px;">No upcoming deadlines.</p>`}
+              </div>
+            </div>
+          </div>
+        `;
+        U.renderIcons();
+        Charts.insights(inDefault, defaultCur);
+      },
+
+      funds() {
+        const wrap = document.getElementById('view-funds');
+        const all = State.data.funds;
+        if (all.length === 0) {
+          wrap.innerHTML = Render._empty();
+          U.renderIcons();
+          return;
+        }
+        const analyses = all.map(f => ({ fund: f, a: Calc.analyze(f) }));
+        wrap.innerHTML = `
+          <h2 style="font-size:22px;font-weight:600;letter-spacing:-0.01em;margin-bottom:6px;">All Funds</h2>
+          <p style="color:var(--text-secondary);font-size:14px;margin-bottom:24px;">${all.length} fund${all.length !== 1 ? 's' : ''} · ${all.filter(f => f.archived).length} archived</p>
+          <div class="fund-grid">${analyses.map(x => Render._fundCard(x.fund, x.a)).join('')}</div>
+        `;
+        U.renderIcons();
+      },
+
+      settings() {
+        const wrap = document.getElementById('view-settings');
+        const s = State.data.settings;
+        const hasFunds = State.data.funds.length > 0;
+        wrap.innerHTML = `
+          <h2 style="font-size:22px;font-weight:600;letter-spacing:-0.01em;margin-bottom:24px;">Settings</h2>
+
+          <div class="settings-group">
+            <div class="settings-group-title">Preferences</div>
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-row-label">
+                  <div class="title">Default currency</div>
+                  <div class="desc">Used app-wide. Changes update all existing funds.</div>
+                </div>
+                <div class="control">
+                  <select class="select" id="currencySelect" data-current="${s.currency}">
+                    ${CURRENCIES.map(c => `<option value="${c.code}" ${c.code === s.currency ? 'selected' : ''}>${c.code} ${c.symbol} — ${c.name}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">
+                  <div class="title">Theme</div>
+                  <div class="desc">Light, dark, or follow system</div>
+                </div>
+                <div class="control">
+                  <div class="segmented">
+                    <button data-theme-set="light" class="${s.theme === 'light' ? 'active' : ''}">Light</button>
+                    <button data-theme-set="dark" class="${s.theme === 'dark' ? 'active' : ''}">Dark</button>
+                    <button data-theme-set="auto" class="${s.theme === 'auto' ? 'active' : ''}">Auto</button>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">
+                  <div class="title">Week starts on</div>
+                  <div class="desc">For weekly frequency</div>
+                </div>
+                <div class="control">
+                  <div class="segmented">
+                    <button data-week-set="sunday" class="${s.weekStart === 'sunday' ? 'active' : ''}">Sunday</button>
+                    <button data-week-set="monday" class="${s.weekStart === 'monday' ? 'active' : ''}">Monday</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-title">Data</div>
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-row-label">
+                  <div class="title">Export backup</div>
+                  <div class="desc">Download all data as JSON</div>
+                </div>
+                <div class="control"><button class="btn btn-secondary" data-action="export"><i data-lucide="download"></i> Export</button></div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">
+                  <div class="title">Import backup</div>
+                  <div class="desc">Restore from a JSON file</div>
+                </div>
+                <div class="control"><button class="btn btn-secondary" data-action="import"><i data-lucide="upload"></i> Import</button></div>
+              </div>
+              ${!hasFunds ? `
+              <div class="settings-row">
+                <div class="settings-row-label">
+                  <div class="title">Load demo data</div>
+                  <div class="desc">Try the app with example funds</div>
+                </div>
+                <div class="control"><button class="btn btn-secondary" data-action="load-demo">Load demo</button></div>
+              </div>` : ''}
+              <div class="settings-row">
+                <div class="settings-row-label">
+                  <div class="title" style="color:var(--danger);">Reset all data</div>
+                  <div class="desc">Permanently delete everything</div>
+                </div>
+                <div class="control"><button class="btn btn-danger" data-action="reset"><i data-lucide="trash-2"></i> Reset</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-title">About</div>
+            <div class="settings-card">
+              <div class="settings-row" style="display:block;padding-top:18px;padding-bottom:18px;">
+                <div style="font-size:15px;font-weight:600;color:var(--text-primary);">Sinking Fund Tracker</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Offline-first savings goal tracker.</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:12px;">v${APP_VERSION} · Made with care.</div>
+              </div>
+            </div>
+          </div>
+        `;
+        U.renderIcons();
+      }
+    };
+
+    // === Modals ===
+    const Modal = {
+      _stack: [],
+      open(html, opts = {}) {
+        const root = document.getElementById('modalRoot');
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop';
+        backdrop.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+        root.appendChild(backdrop);
+        requestAnimationFrame(() => backdrop.classList.add('open'));
+        backdrop.addEventListener('click', (e) => {
+          if (e.target === backdrop) Modal.close();
+        });
+        Modal._stack.push(backdrop);
+        U.renderIcons();
+        if (opts.onMount) opts.onMount(backdrop);
+        return backdrop;
+      },
+      close() {
+        const el = Modal._stack.pop();
+        if (!el) return;
+        el.classList.remove('open');
+        setTimeout(() => el.remove(), 220);
+      },
+
+      fundForm(existing) {
+        const defaultCur = State.defaultCurrency();
+        const data = existing ? Object.assign({}, existing) : {
+          name: '', icon: 'wallet', color: COLOR_SWATCHES[0],
+          category: 'Other', currency: defaultCur,
+          targetAmount: '', targetDate: '',
+          startDate: U.todayISO(), frequency: 'monthly', notes: ''
+        };
+        const isEdit = !!existing;
+        const html = `
+          <div class="modal-header">
+            <h3>${isEdit ? 'Edit fund' : 'New fund'}</h3>
+            <button class="icon-btn" data-action="close-modal" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+          <form id="fundForm" novalidate>
+            <div class="field">
+              <label class="label" for="ff-name">Name</label>
+              <input class="input" id="ff-name" name="name" type="text" maxlength="50" required value="${U.escape(data.name)}" placeholder="e.g. Holiday Gifts" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="ff-target">Target amount</label>
+              <div class="input-with-prefix large">
+                <span class="prefix" id="ff-prefix"></span>
+                <input class="input large tabular" id="ff-target" name="targetAmount" type="number" inputmode="decimal" min="0" step="0.01" required value="${data.targetAmount}" placeholder="0" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ff-currency">Currency</label>
+              <select class="select" id="ff-currency" name="currency">
+                ${CURRENCIES.map(c => `<option value="${c.code}" ${c.code === data.currency ? 'selected' : ''}>${c.code} ${c.symbol} — ${c.name}</option>`).join('')}
+              </select>
+              <div class="helper">Defaults to your global currency. Set differently per fund if needed.</div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ff-end">Target date</label>
+              <input class="input" id="ff-end" name="targetDate" type="date" required value="${data.targetDate}" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="ff-category">Category</label>
+              <select class="select" id="ff-category" name="category">
+                ${CATEGORIES.map(cat => `<option value="${cat.id}" ${cat.id === data.category ? 'selected' : ''}>${cat.id}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label">Contribution frequency</label>
+              <div class="segmented" id="freqSeg">
+                <button type="button" data-freq="weekly" class="${data.frequency === 'weekly' ? 'active' : ''}">Weekly</button>
+                <button type="button" data-freq="biweekly" class="${data.frequency === 'biweekly' ? 'active' : ''}">Bi-weekly</button>
+                <button type="button" data-freq="monthly" class="${data.frequency === 'monthly' ? 'active' : ''}">Monthly</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">Icon</label>
+              <div class="icon-picker" id="iconPicker">
+                ${ICON_CHOICES.map(ic => `
+                  <button type="button" class="icon-pick ${ic === data.icon ? 'active' : ''}" data-icon="${ic}" aria-label="${ic}">
+                    <i data-lucide="${ic}"></i>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">Color</label>
+              <div class="color-row" id="colorRow">
+                ${COLOR_SWATCHES.map(col => `
+                  <button type="button" class="color-swatch ${col === data.color ? 'active' : ''}" data-color="${col}" style="background:${col};" aria-label="${col}"></button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ff-notes">Notes (optional)</label>
+              <textarea class="textarea" id="ff-notes" name="notes" maxlength="200" placeholder="Any details to remember">${U.escape(data.notes || '')}</textarea>
+            </div>
+
+            <button type="button" class="advanced-toggle" id="advToggle"><i data-lucide="chevron-right"></i> Advanced</button>
+            <div class="advanced-body" id="advBody">
+              <div class="field" style="margin-top:8px;">
+                <label class="label" for="ff-start">Start date</label>
+                <input class="input" id="ff-start" name="startDate" type="date" value="${data.startDate}" />
+                <div class="helper">Used to compute pace. Defaults to today.</div>
+              </div>
+            </div>
+
+            <div class="calc-hint tabular" id="calcHint">Set a target amount and date to see required contributions.</div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" data-action="close-modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">${isEdit ? 'Save changes' : 'Save fund'}</button>
+            </div>
+          </form>
+        `;
+        Modal.open(html, { onMount: (root) => {
+          const form = root.querySelector('#fundForm');
+          const state = Object.assign({}, data);
+          const prefixEl = root.querySelector('#ff-prefix');
+
+          const updatePrefix = () => {
+            const c = U.currency(state.currency);
+            prefixEl.textContent = c.position === 'prefix' ? c.symbol : c.code;
+          };
+          const updateHint = () => {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const end = U.parseDate(state.targetDate);
+            const target = Number(state.targetAmount) || 0;
+            const balance = isEdit ? State.balance(existing.id) : 0;
+            const remaining = Math.max(0, target - balance);
+            if (target <= 0 || !end || end <= today) {
+              root.querySelector('#calcHint').textContent = 'Set a target amount and future date to see required contributions.';
+              return;
+            }
+            const per = Math.max(0.01, Calc.periods(state.frequency, today, end));
+            const need = remaining / per;
+            const lbl = Calc.periodLabel(state.frequency);
+            root.querySelector('#calcHint').textContent = `You'll save ${U.formatMoney(need, state.currency)} every ${lbl} to reach this goal.`;
+          };
+          updatePrefix();
+          updateHint();
+
+          form.addEventListener('input', (e) => {
+            const t = e.target;
+            if (t.name) state[t.name] = t.value;
+            if (t.name === 'currency') updatePrefix();
+            updateHint();
+          });
+          form.addEventListener('change', (e) => {
+            if (e.target.name === 'currency') {
+              state.currency = e.target.value;
+              updatePrefix();
+              updateHint();
+            }
+          });
+          root.querySelector('#iconPicker').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-icon]'); if (!btn) return;
+            state.icon = btn.dataset.icon;
+            root.querySelectorAll('#iconPicker .icon-pick').forEach(b => b.classList.toggle('active', b === btn));
+          });
+          root.querySelector('#colorRow').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-color]'); if (!btn) return;
+            state.color = btn.dataset.color;
+            root.querySelectorAll('.color-swatch').forEach(b => b.classList.toggle('active', b === btn));
+          });
+          root.querySelector('#freqSeg').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-freq]'); if (!btn) return;
+            state.frequency = btn.dataset.freq;
+            root.querySelectorAll('#freqSeg button').forEach(b => b.classList.toggle('active', b === btn));
+            updateHint();
+          });
+          root.querySelector('#advToggle').addEventListener('click', (e) => {
+            const t = e.currentTarget;
+            t.classList.toggle('open');
+            root.querySelector('#advBody').classList.toggle('open');
+          });
+
+          form.addEventListener('submit', (ev) => {
+            ev.preventDefault();
+            const fd = new FormData(form);
+            const fund = {
+              id: existing?.id || U.uuid(),
+              name: (fd.get('name') || '').toString().trim(),
+              icon: state.icon,
+              color: state.color,
+              category: fd.get('category'),
+              currency: fd.get('currency') || state.currency || defaultCur,
+              targetAmount: Number(fd.get('targetAmount')) || 0,
+              targetDate: fd.get('targetDate'),
+              startDate: fd.get('startDate') || U.todayISO(),
+              frequency: state.frequency,
+              notes: (fd.get('notes') || '').toString().trim(),
+              archived: existing?.archived || false,
+              createdAt: existing?.createdAt || new Date().toISOString()
+            };
+            if (!fund.name) { Toast.show('Please add a name', 'error'); return; }
+            if (!(fund.targetAmount > 0)) { Toast.show('Target amount must be greater than 0', 'error'); return; }
+            if (!fund.targetDate) { Toast.show('Please choose a target date', 'error'); return; }
+
+            if (isEdit) {
+              const idx = State.data.funds.findIndex(f => f.id === existing.id);
+              if (idx >= 0) State.data.funds[idx] = fund;
+              Toast.show('Fund updated', 'success');
+            } else {
+              State.data.funds.push(fund);
+              Toast.show('Fund created', 'success');
+            }
+            State.persist();
+            Modal.close();
+            App.rerenderAll();
+            if (!isEdit) { State.currentFundId = fund.id; App.showView('detail'); }
+          });
+
+          setTimeout(() => root.querySelector('#ff-name').focus(), 80);
+        }});
+      },
+
+      contribution(fundId) {
+        const fund = State.getFund(fundId);
+        if (!fund) return;
+        const cur = fund.currency || State.defaultCurrency();
+        const c = U.currency(cur);
+        const html = `
+          <div class="modal-header">
+            <h3>Add to ${U.escape(fund.name)}</h3>
+            <button class="icon-btn" data-action="close-modal" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+          <form id="contribForm" novalidate>
+            <div class="field">
+              <label class="label">Type</label>
+              <div class="segmented" id="typeSeg">
+                <button type="button" data-ctype="deposit" class="active">Deposit</button>
+                <button type="button" data-ctype="withdrawal">Withdrawal</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="cf-amount">Amount</label>
+              <div class="input-with-prefix large">
+                <span class="prefix">${c.position === 'prefix' ? c.symbol : c.code}</span>
+                <input class="input large tabular" id="cf-amount" name="amount" type="number" inputmode="decimal" min="0" step="0.01" required placeholder="0" />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="label" for="cf-date">Date</label>
+                <input class="input" id="cf-date" name="date" type="date" required value="${U.todayISO()}" />
+              </div>
+              <div class="field">
+                <label class="label" for="cf-note">Note</label>
+                <input class="input" id="cf-note" name="note" type="text" maxlength="80" placeholder="Optional" />
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" data-action="close-modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        `;
+        Modal.open(html, { onMount: (root) => {
+          let type = 'deposit';
+          root.querySelector('#typeSeg').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-ctype]'); if (!btn) return;
+            type = btn.dataset.ctype;
+            root.querySelectorAll('#typeSeg button').forEach(b => b.classList.toggle('active', b === btn));
+          });
+          setTimeout(() => root.querySelector('#cf-amount').focus(), 80);
+          root.querySelector('#contribForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const amount = Number(fd.get('amount'));
+            if (!(amount > 0)) { Toast.show('Amount must be greater than 0', 'error'); return; }
+            const before = State.balance(fundId);
+            const after = type === 'withdrawal' ? before - amount : before + amount;
+            const contribution = {
+              id: U.uuid(), fundId, amount,
+              date: fd.get('date') || U.todayISO(),
+              type, note: (fd.get('note') || '').toString().trim()
+            };
+            State.data.contributions.push(contribution);
+            State.persist();
+            Modal.close();
+            App.rerenderAll();
+            if (type === 'withdrawal' && after < 0) {
+              Toast.show('Saved — balance is below zero', 'error');
+            } else {
+              Toast.show('Contribution added', 'success');
+            }
+          });
+        }});
+      },
+
+      quickDeposit() {
+        const defaultCur = State.defaultCurrency();
+        const active = State.data.funds.filter(f => !f.archived);
+        const eligible = active.filter(f => (f.currency || defaultCur) === defaultCur);
+        const skipped = active.length - eligible.length;
+        if (eligible.length === 0) {
+          Toast.show(`No funds in ${defaultCur} to distribute to`, 'error');
+          return;
+        }
+        const analyses = eligible.map(f => ({ fund: f, a: Calc.analyze(f) }));
+        const c = U.currency(defaultCur);
+        const warning = skipped > 0
+          ? `<div class="qd-warning"><i data-lucide="info" style="width:14px;height:14px;display:inline;vertical-align:-2px;"></i> ${skipped} fund${skipped !== 1 ? 's' : ''} in other currencies hidden. Quick deposit only works on funds matching your default currency (${defaultCur}).</div>`
+          : '';
+        const html = `
+          <div class="modal-header">
+            <h3>Distribute payday savings</h3>
+            <button class="icon-btn" data-action="close-modal" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+          ${warning}
+          <div class="field">
+            <label class="label" for="qd-total">Total to distribute (${defaultCur})</label>
+            <div style="display:flex;gap:8px;">
+              <div class="input-with-prefix large" style="flex:1;">
+                <span class="prefix">${c.position === 'prefix' ? c.symbol : c.code}</span>
+                <input class="input large tabular" id="qd-total" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+              </div>
+              <button type="button" class="btn btn-secondary" id="qd-auto">Auto-distribute</button>
+            </div>
+          </div>
+
+          <div id="qdList">
+            ${analyses.map(x => `
+              <div class="qd-row" data-fund-id="${x.fund.id}">
+                <span class="fund-icon" style="width:36px;height:36px;border-radius:8px;background:${U.hexToRgba(x.fund.color || '#0F766E', 0.10)};color:${x.fund.color || '#0F766E'};">
+                  <i data-lucide="${U.escape(x.fund.icon || U.categoryIcon(x.fund.category))}"></i>
+                </span>
+                <div class="qd-info">
+                  <div class="qd-name">${U.escape(x.fund.name)}</div>
+                  <div class="qd-cat tabular">${U.escape(x.fund.category)} · needs ${U.formatMoneyShort(x.a.requiredPerPeriod, x.fund.currency)}/${Calc.periodLabel(x.fund.frequency)}</div>
+                </div>
+                <input class="qd-amount tabular" data-need="${x.a.requiredPerPeriod}" type="number" inputmode="decimal" min="0" step="0.01" value="0" aria-label="Amount for ${U.escape(x.fund.name)}" />
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="qd-summary" id="qdSummary">
+            <span>Allocated</span>
+            <span class="v tabular" id="qdSumText">${U.formatMoney(0, defaultCur)} of ${U.formatMoney(0, defaultCur)}</span>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" data-action="close-modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="qdApply">Apply</button>
+          </div>
+        `;
+        Modal.open(html, { onMount: (root) => {
+          const totalInput = root.querySelector('#qd-total');
+          const inputs = root.querySelectorAll('.qd-amount');
+          const summary = root.querySelector('#qdSummary');
+          const sumText = root.querySelector('#qdSumText');
+          const totalNeed = analyses.reduce((s, x) => s + Math.max(0.01, x.a.requiredPerPeriod), 0);
+
+          const update = () => {
+            let alloc = 0;
+            inputs.forEach(i => alloc += Number(i.value) || 0);
+            const total = Number(totalInput.value) || 0;
+            sumText.textContent = `${U.formatMoney(alloc, defaultCur)} of ${U.formatMoney(total, defaultCur)}`;
+            summary.classList.remove('over', 'exact');
+            if (Math.abs(total - alloc) < 0.01 && total > 0) summary.classList.add('exact');
+            else if (alloc > total) summary.classList.add('over');
+          };
+
+          root.querySelector('#qd-auto').addEventListener('click', () => {
+            const total = Number(totalInput.value) || 0;
+            inputs.forEach(i => {
+              const need = Number(i.dataset.need) || 0;
+              const share = totalNeed > 0 ? (need / totalNeed) * total : total / inputs.length;
+              i.value = share > 0 ? share.toFixed(2) : 0;
+            });
+            update();
+          });
+          totalInput.addEventListener('input', update);
+          inputs.forEach(i => i.addEventListener('input', update));
+
+          setTimeout(() => totalInput.focus(), 80);
+
+          root.querySelector('#qdApply').addEventListener('click', () => {
+            let count = 0;
+            const today = U.todayISO();
+            inputs.forEach(i => {
+              const fundId = i.closest('[data-fund-id]').dataset.fundId;
+              const amount = Number(i.value) || 0;
+              if (amount > 0) {
+                State.data.contributions.push({
+                  id: U.uuid(), fundId, amount, date: today, type: 'deposit', note: 'Quick deposit'
+                });
+                count++;
+              }
+            });
+            if (count === 0) { Toast.show('Enter at least one amount', 'error'); return; }
+            State.persist();
+            Modal.close();
+            App.rerenderAll();
+            Toast.show(`Added to ${count} fund${count !== 1 ? 's' : ''}`, 'success');
+          });
+        }});
+      },
+
+      confirm(title, message, onConfirm, dangerLabel) {
+        const html = `
+          <div class="modal-header">
+            <h3>${U.escape(title)}</h3>
+            <button class="icon-btn" data-action="close-modal" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+          <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;">${U.escape(message)}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" data-action="close-modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmYes">${U.escape(dangerLabel || 'Delete')}</button>
+          </div>
+        `;
+        Modal.open(html, { onMount: (root) => {
+          root.querySelector('#confirmYes').addEventListener('click', () => { onConfirm(); Modal.close(); });
+        }});
+      },
+
+      /** Non-destructive primary-action confirm (used by global currency change). */
+      confirmPrimary(title, message, onConfirm, label) {
+        const html = `
+          <div class="modal-header">
+            <h3>${U.escape(title)}</h3>
+            <button class="icon-btn" data-action="close-modal" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+          <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;">${U.escape(message)}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" data-action="close-modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirmYes">${U.escape(label || 'Confirm')}</button>
+          </div>
+        `;
+        Modal.open(html, { onMount: (root) => {
+          root.querySelector('#confirmYes').addEventListener('click', () => { onConfirm(); Modal.close(); });
+        }});
+      }
+    };
+
+    // === Charts ===
+    const Charts = {
+      _loaded: false,
+      _instances: {},
+      load() {
+        if (Charts._loaded || window.Chart) { Charts._loaded = true; return Promise.resolve(); }
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+          s.onload = () => { Charts._loaded = true; resolve(); };
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      },
+      colors() {
+        const body = getComputedStyle(document.body);
+        return {
+          accent: body.getPropertyValue('--accent').trim() || '#0F766E',
+          text: body.getPropertyValue('--text-muted').trim() || '#A8A29E',
+          textPrimary: body.getPropertyValue('--text-primary').trim() || '#1C1917',
+          grid: body.getPropertyValue('--border').trim() || '#E7E5E4',
+          surface: body.getPropertyValue('--surface').trim() || '#FFFFFF'
+        };
+      },
+      baseOpts() {
+        const c = Charts.colors();
+        return {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 400, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: c.textPrimary,
+              titleColor: c.surface,
+              bodyColor: c.surface,
+              padding: 10,
+              cornerRadius: 8,
+              displayColors: false,
+              titleFont: { family: 'Inter', size: 12, weight: '500' },
+              bodyFont: { family: 'Inter', size: 13, weight: '500' }
+            }
+          }
+        };
+      },
+      detail(fund, color) {
+        if (!window.Chart) { Charts.load().then(() => Charts.detail(fund, color)); return; }
+        const ctx = document.getElementById('detailChart');
+        if (!ctx) return;
+        if (Charts._instances.detail) Charts._instances.detail.destroy();
+
+        const cur = fund.currency || State.defaultCurrency();
+        const contribs = State.contributionsFor(fund.id);
+        const points = [];
+        let running = 0;
+        points.push({ x: fund.startDate || U.todayISO(), y: 0 });
+        contribs.forEach(c => {
+          running += c.type === 'withdrawal' ? -c.amount : c.amount;
+          points.push({ x: c.date, y: running });
+        });
+        points.push({ x: U.todayISO(), y: running });
+
+        const c = Charts.colors();
+        const opts = Charts.baseOpts();
+        Charts._instances.detail = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: points.map(p => p.x),
+            datasets: [{
+              data: points.map(p => p.y),
+              borderColor: color,
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              pointHoverBackgroundColor: color
+            }]
+          },
+          options: Object.assign({}, opts, {
+            plugins: Object.assign({}, opts.plugins, {
+              tooltip: Object.assign({}, opts.plugins.tooltip, {
+                callbacks: { label: ctx => U.formatMoney(ctx.parsed.y, cur) }
+              })
+            }),
+            scales: {
+              x: { ticks: { color: c.text, font: { family: 'Inter', size: 11 }, maxTicksLimit: 5 }, grid: { display: false }, border: { display: false } },
+              y: { ticks: { color: c.text, font: { family: 'Inter', size: 11 }, callback: v => U.formatMoneyShort(v, cur) }, grid: { color: c.grid }, border: { display: false } }
+            }
+          })
+        });
+      },
+      insights(funds, defaultCur) {
+        if (!window.Chart) { Charts.load().then(() => Charts.insights(funds, defaultCur)); return; }
+        const c = Charts.colors();
+        const opts = Charts.baseOpts();
+        const cur = defaultCur || State.defaultCurrency();
+
+        const inIds = new Set(funds.map(f => f.id));
+        const all = State.data.contributions.filter(c => inIds.has(c.fundId)).slice().sort((a, b) => a.date.localeCompare(b.date));
+        let run = 0;
+        const map = {};
+        all.forEach(ct => {
+          run += ct.type === 'withdrawal' ? -ct.amount : ct.amount;
+          map[ct.date] = run;
+        });
+        const dates = Object.keys(map).sort();
+        const ctxTotal = document.getElementById('chartTotal');
+        if (Charts._instances.total) Charts._instances.total.destroy();
+        if (ctxTotal) {
+          Charts._instances.total = new Chart(ctxTotal, {
+            type: 'line',
+            data: {
+              labels: dates,
+              datasets: [{
+                data: dates.map(d => map[d]),
+                borderColor: c.accent,
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 4
+              }]
+            },
+            options: Object.assign({}, opts, {
+              plugins: Object.assign({}, opts.plugins, {
+                tooltip: Object.assign({}, opts.plugins.tooltip, {
+                  callbacks: { label: ctx => U.formatMoney(ctx.parsed.y, cur) }
+                })
+              }),
+              scales: {
+                x: { ticks: { color: c.text, font: { family: 'Inter', size: 11 }, maxTicksLimit: 5 }, grid: { display: false }, border: { display: false } },
+                y: { ticks: { color: c.text, font: { family: 'Inter', size: 11 }, callback: v => U.formatMoneyShort(v, cur) }, grid: { color: c.grid }, border: { display: false } }
+              }
+            })
+          });
+        }
+
+        // Allocation by category — horizontal bar
+        const catTotals = {};
+        funds.forEach(f => {
+          const b = State.balance(f.id);
+          if (b > 0) catTotals[f.category] = (catTotals[f.category] || 0) + b;
+        });
+        const cats = Object.keys(catTotals);
+        const totalCats = Object.values(catTotals).reduce((s, v) => s + v, 0) || 1;
+        const ctxAlloc = document.getElementById('chartAlloc');
+        if (Charts._instances.alloc) Charts._instances.alloc.destroy();
+        if (ctxAlloc) {
+          Charts._instances.alloc = new Chart(ctxAlloc, {
+            type: 'bar',
+            data: {
+              labels: cats,
+              datasets: [{
+                data: cats.map(k => catTotals[k]),
+                backgroundColor: c.accent,
+                borderRadius: 4,
+                barThickness: 16
+              }]
+            },
+            options: Object.assign({}, opts, {
+              indexAxis: 'y',
+              plugins: Object.assign({}, opts.plugins, {
+                tooltip: Object.assign({}, opts.plugins.tooltip, {
+                  callbacks: {
+                    label: ctx => `${U.formatMoney(ctx.parsed.x, cur)} (${Math.round((ctx.parsed.x / totalCats) * 100)}%)`
+                  }
+                })
+              }),
+              scales: {
+                x: { ticks: { color: c.text, font: { family: 'Inter', size: 11 }, callback: v => U.formatMoneyShort(v, cur) }, grid: { color: c.grid }, border: { display: false } },
+                y: { ticks: { color: c.text, font: { family: 'Inter', size: 11 } }, grid: { display: false }, border: { display: false } }
+              }
+            })
+          });
+        }
+
+        // Monthly contributions — vertical bar
+        const monthly = {};
+        const now = new Date();
+        for (let i = 11; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          monthly[d.toISOString().slice(0, 7)] = 0;
+        }
+        State.data.contributions.forEach(ct => {
+          if (!inIds.has(ct.fundId)) return;
+          const k = ct.date.slice(0, 7);
+          if (k in monthly) monthly[k] += ct.type === 'withdrawal' ? -ct.amount : ct.amount;
+        });
+        const ctxM = document.getElementById('chartMonthly');
+        if (Charts._instances.monthly) Charts._instances.monthly.destroy();
+        if (ctxM) {
+          Charts._instances.monthly = new Chart(ctxM, {
+            type: 'bar',
+            data: {
+              labels: Object.keys(monthly).map(k => {
+                const [y, m] = k.split('-');
+                return new Date(Number(y), Number(m)-1, 1).toLocaleDateString('en', { month: 'short' });
+              }),
+              datasets: [{
+                data: Object.values(monthly),
+                backgroundColor: c.accent,
+                borderRadius: 4,
+                maxBarThickness: 28
+              }]
+            },
+            options: Object.assign({}, opts, {
+              plugins: Object.assign({}, opts.plugins, {
+                tooltip: Object.assign({}, opts.plugins.tooltip, {
+                  callbacks: { label: ctx => U.formatMoney(ctx.parsed.y, cur) }
+                })
+              }),
+              scales: {
+                x: { ticks: { color: c.text, font: { family: 'Inter', size: 11 } }, grid: { display: false }, border: { display: false } },
+                y: { ticks: { color: c.text, font: { family: 'Inter', size: 11 }, callback: v => U.formatMoneyShort(v, cur) }, grid: { color: c.grid }, border: { display: false } }
+              }
+            })
+          });
+        }
+      }
+    };
+
+    // === App namespace ===
+    const App = {
+      showView(name) {
+        State.view = name;
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        const el = document.getElementById('view-' + name);
+        if (el) el.classList.add('active');
+        document.querySelectorAll('.nav-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        App.renderCurrent();
+      },
+      renderCurrent() {
+        Render.header();
+        switch (State.view) {
+          case 'home': Render.home(); break;
+          case 'detail': Render.detail(); break;
+          case 'insights': Charts.load().then(() => Render.insights()); break;
+          case 'funds': Render.funds(); break;
+          case 'settings': Render.settings(); break;
+        }
+      },
+      rerenderAll() { App.renderCurrent(); },
+      applyTheme() {
+        const setting = State.data.settings.theme;
+        let theme = setting;
+        if (setting === 'auto') {
+          theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.body.dataset.theme = theme;
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#0C0A09' : '#FAFAF9');
+      }
+    };
+
+    // === Handlers ===
+    function bindEvents() {
+      // Nav
+      document.querySelector('.nav-bar').addEventListener('click', (e) => {
+        const item = e.target.closest('.nav-item');
+        if (item && item.dataset.view) App.showView(item.dataset.view);
+      });
+      document.getElementById('fabAdd').addEventListener('click', () => Modal.fundForm(null));
+
+      document.body.addEventListener('click', (e) => {
+        if (e.target.closest('[data-action="close-modal"]')) { e.preventDefault(); Modal.close(); return; }
+        if (e.target.closest('[data-action="add-fund"]')) { e.preventDefault(); Modal.fundForm(null); return; }
+        const ac = e.target.closest('[data-action="add-contribution"]');
+        if (ac) { e.preventDefault(); Modal.contribution(ac.dataset.fundId); return; }
+        if (e.target.closest('[data-action="quick-deposit"]')) { e.preventDefault(); Modal.quickDeposit(); return; }
+        if (e.target.closest('[data-action="back-home"]')) { e.preventDefault(); App.showView('home'); return; }
+        const fm = e.target.closest('[data-action="fund-menu"]');
+        if (fm) { e.preventDefault(); openFundMenu(fm); return; }
+
+        if (e.target.closest('[data-action="load-demo"]')) {
+          e.preventDefault();
+          if (State.data.funds.length > 0) {
+            Modal.confirm('Load demo data?', 'This adds demo funds and contributions alongside your existing data.', () => {
+              Store.loadDemo(); App.rerenderAll(); Toast.show('Demo data loaded', 'success');
+            }, 'Load demo');
+          } else {
+            Store.loadDemo(); App.rerenderAll(); Toast.show('Demo data loaded', 'success');
+          }
+          return;
+        }
+
+        if (e.target.closest('[data-action="toggle-theme"]')) {
+          const cur = State.data.settings.theme;
+          State.data.settings.theme = cur === 'light' ? 'dark' : cur === 'dark' ? 'auto' : 'light';
+          State.persist();
+          App.applyTheme();
+          App.rerenderAll();
+          return;
+        }
+        if (e.target.closest('[data-action="install"]')) {
+          if (window.__sftDeferredPrompt) {
+            window.__sftDeferredPrompt.prompt();
+            window.__sftDeferredPrompt.userChoice.then(c => {
+              if (c.outcome === 'accepted') localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+              window.__sftDeferredPrompt = null;
+              Render.header();
+            });
+          }
+          return;
+        }
+
+        const tab = e.target.closest('[data-filter]');
+        if (tab) { State.filter = tab.dataset.filter; Render.home(); return; }
+
+        const vl = e.target.closest('[data-view-link]');
+        if (vl) { App.showView(vl.dataset.viewLink); return; }
+
+        const dc = e.target.closest('[data-action="delete-contrib"]');
+        if (dc) {
+          e.preventDefault(); e.stopPropagation();
+          const id = dc.dataset.contribId;
+          State.data.contributions = State.data.contributions.filter(c => c.id !== id);
+          State.persist();
+          Render.detail();
+          Toast.show('Removed', 'success');
+          return;
+        }
+
+        const card = e.target.closest('.fund-card[data-fund-id]');
+        if (card) { State.currentFundId = card.dataset.fundId; App.showView('detail'); return; }
+
+        if (e.target.closest('[data-action="export"]')) { Store.export(); Toast.show('Backup exported', 'success'); return; }
+        if (e.target.closest('[data-action="import"]')) {
+          const inp = document.createElement('input');
+          inp.type = 'file'; inp.accept = 'application/json';
+          inp.onchange = (ev) => {
+            const file = ev.target.files[0]; if (!file) return;
+            Modal.confirm('Import backup?', 'This replaces all current data with the contents of the file.', () => {
+              Store.import(file).then(d => {
+                State.data = d; App.applyTheme(); App.rerenderAll();
+                Toast.show('Backup imported', 'success');
+              }).catch(() => Toast.show('Could not import file', 'error'));
+            }, 'Replace data');
+          };
+          inp.click();
+          return;
+        }
+        if (e.target.closest('[data-action="reset"]')) {
+          Modal.confirm('Reset all data?', 'This permanently deletes all funds, contributions, and settings.', () => {
+            Store.reset(); State.load(); App.applyTheme(); App.showView('home');
+            Toast.show('All data cleared', 'success');
+          }, 'Reset everything');
+          return;
+        }
+
+        const ts = e.target.closest('[data-theme-set]');
+        if (ts) { State.data.settings.theme = ts.dataset.themeSet; State.persist(); App.applyTheme(); Render.settings(); Render.header(); return; }
+        const ws = e.target.closest('[data-week-set]');
+        if (ws) { State.data.settings.weekStart = ws.dataset.weekSet; State.persist(); Render.settings(); return; }
+
+        // dismiss any open menu
+        const openMenu = document.querySelector('.menu');
+        if (openMenu && !e.target.closest('.menu') && !e.target.closest('[data-action="fund-menu"]')) {
+          openMenu.remove();
+        }
+      });
+
+      document.body.addEventListener('change', (e) => {
+        if (e.target.id === 'currencySelect') {
+          const prev = e.target.dataset.current;
+          const code = e.target.value;
+          if (code === prev) return;
+          if (State.data.funds.length > 0) {
+            Modal.confirmPrimary(
+              `Change currency to ${code}?`,
+              `This will update the display currency for every existing fund. Stored amounts stay the same — only the currency label changes.`,
+              () => {
+                Store.changeDefaultCurrency(code);
+                App.rerenderAll();
+                Toast.show(`Currency changed to ${code}`, 'success');
+              },
+              'Change all'
+            );
+            // revert the select if user cancels by leaving it as-is until confirm fires
+            e.target.value = prev;
+          } else {
+            Store.changeDefaultCurrency(code);
+            App.rerenderAll();
+            Toast.show(`Currency changed to ${code}`, 'success');
+          }
+        }
+      });
+
+      document.body.addEventListener('input', (e) => {
+        if (e.target.id === 'searchInput') {
+          State.search = e.target.value;
+          const grid = document.getElementById('fundGrid');
+          if (grid) {
+            const active = State.data.funds.filter(f => !f.archived);
+            const analyses = active.map(f => ({ fund: f, a: Calc.analyze(f) }));
+            grid.innerHTML = Render._fundCards(analyses);
+            U.renderIcons();
+          }
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        const inField = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+        if (e.key === 'Escape') {
+          if (Modal._stack.length) Modal.close();
+          const menu = document.querySelector('.menu'); if (menu) menu.remove();
+          return;
+        }
+        if (inField) return;
+        if (e.key === 'n' || e.key === 'N') { e.preventDefault(); Modal.fundForm(null); }
+        else if (e.key === '/') { e.preventDefault(); document.getElementById('searchInput')?.focus(); }
+        else if (e.key === 't' || e.key === 'T') {
+          const cur = State.data.settings.theme;
+          State.data.settings.theme = cur === 'light' ? 'dark' : cur === 'dark' ? 'auto' : 'light';
+          State.persist(); App.applyTheme(); App.rerenderAll();
+        }
+      });
+
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          if (State.data.settings.theme === 'auto') App.applyTheme();
+        });
+      }
+    }
+
+    function openFundMenu(triggerBtn) {
+      document.querySelectorAll('.menu').forEach(m => m.remove());
+      const fundId = triggerBtn.dataset.fundId;
+      const fund = State.getFund(fundId);
+      if (!fund) return;
+      const menu = document.createElement('div');
+      menu.className = 'menu';
+      menu.innerHTML = `
+        <button class="menu-item" data-menu="edit"><i data-lucide="pencil"></i> Edit fund</button>
+        <button class="menu-item" data-menu="archive"><i data-lucide="archive"></i> ${fund.archived ? 'Unarchive' : 'Archive'}</button>
+        <button class="menu-item danger" data-menu="delete"><i data-lucide="trash-2"></i> Delete fund</button>
+      `;
+      document.body.appendChild(menu);
+      const rect = triggerBtn.getBoundingClientRect();
+      const mw = menu.offsetWidth;
+      let left = rect.right - mw;
+      left = Math.max(8, Math.min(left, window.innerWidth - mw - 8));
+      menu.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
+      menu.style.left = left + 'px';
+      U.renderIcons();
+
+      menu.addEventListener('click', (e) => {
+        const item = e.target.closest('[data-menu]'); if (!item) return;
+        const action = item.dataset.menu;
+        menu.remove();
+        if (action === 'edit') Modal.fundForm(fund);
+        else if (action === 'archive') {
+          fund.archived = !fund.archived;
+          State.persist();
+          Toast.show(fund.archived ? 'Archived' : 'Restored', 'success');
+          App.showView('home');
+        } else if (action === 'delete') {
+          Modal.confirm('Delete fund?', `"${fund.name}" and its contributions will be permanently removed.`, () => {
+            State.data.funds = State.data.funds.filter(f => f.id !== fundId);
+            State.data.contributions = State.data.contributions.filter(c => c.fundId !== fundId);
+            State.persist();
+            Toast.show('Fund deleted', 'success');
+            App.showView('home');
+          });
+        }
+      });
+    }
+
+    // === PWA ===
+    function registerSW() {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW failed', err));
+        });
+      }
+    }
+    function setupInstall() {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.__sftDeferredPrompt = e;
+        Render.header();
+      });
+      window.addEventListener('appinstalled', () => {
+        localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+        window.__sftDeferredPrompt = null;
+        Render.header();
+        Toast.show('App installed', 'success');
+      });
+    }
+
+    // === Init ===
+    function init() {
+      State.load();
+      App.applyTheme();
+      bindEvents();
+      registerSW();
+      setupInstall();
+      App.showView('home');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    window.App = { rerender: () => App.rerenderAll() };
+  })();
+  </script>
+</body>
+</html>
