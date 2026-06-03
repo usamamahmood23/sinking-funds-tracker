@@ -3,7 +3,7 @@
    Cache-first strategy with versioned cache + offline fallback
    ============================================================ */
 
-const CACHE_NAME = 'sft-cache-v4';
+const CACHE_NAME = 'sft-cache-v5';
 
 const APP_SHELL = [
   './',
@@ -12,6 +12,9 @@ const APP_SHELL = [
   './icons/favicon.ico',
   './icons/icon-16.png',
   './icons/icon-32.png',
+  './icons/icon-120.png',
+  './icons/icon-152.png',
+  './icons/icon-167.png',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',

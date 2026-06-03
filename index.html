@@ -2,17 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#FAFAF9" />
   <meta name="description" content="Offline-first savings goal tracker. Plan ahead. Save in peace." />
+  <!-- iOS PWA meta tags (required for full-screen install behavior) -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Sinking Funds" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
   <title>Sinking Funds</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png" />
   <link rel="shortcut icon" href="icons/favicon.ico" />
+  <!-- Apple touch icons (iOS uses these instead of the manifest) -->
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png" />
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -51,6 +59,11 @@
       --header-h: 64px;
       --navbar-h: 72px;
       --easing: cubic-bezier(0.16, 1, 0.3, 1);
+      /* iOS safe-area insets — used by sticky header, bottom nav, and toasts */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
     }
     [data-theme="dark"] {
       --bg: #0C0A09;
@@ -1198,6 +1211,110 @@
     .menu-item svg { width: 16px; height: 16px; stroke-width: 1.75; }
 
     /* ==========================================================
+       SAFARI REDIRECT BANNER (non-Safari iOS)
+       ========================================================== */
+    .safari-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--warning-subtle);
+      border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+      border-radius: var(--radius-card);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text-primary);
+    }
+    .safari-banner-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--warning-subtle);
+      color: var(--warning);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .safari-banner-icon svg { width: 18px; height: 18px; stroke-width: 1.75; }
+    .safari-banner-text { flex: 1; min-width: 0; }
+    .safari-banner-text strong { font-weight: 600; }
+    .safari-banner .btn {
+      padding: 6px 10px;
+      min-height: 32px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .safari-banner-close {
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .safari-banner-close:hover { background: var(--surface-subtle); color: var(--text-primary); }
+    .safari-banner-close svg { width: 14px; height: 14px; stroke-width: 1.75; }
+    @media (max-width: 480px) {
+      .safari-banner { flex-wrap: wrap; }
+      .safari-banner-text { flex-basis: calc(100% - 72px); }
+      .safari-banner .btn { order: 3; flex-basis: 100%; margin-top: 8px; }
+    }
+
+    /* ==========================================================
+       INSTALL INSTRUCTIONS MODAL (Safari iOS step-by-step)
+       ========================================================== */
+    .install-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 8px 0 16px;
+    }
+    .install-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px;
+      background: var(--surface-subtle);
+      border-radius: var(--radius-input);
+    }
+    .install-step-num {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    [data-theme="dark"] .install-step-num { color: #0C0A09; }
+    .install-step-body { flex: 1; min-width: 0; font-size: 14px; line-height: 1.45; color: var(--text-primary); }
+    .install-step-body strong { font-weight: 600; }
+    .install-step-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .install-step-icon svg { width: 32px; height: 32px; stroke-width: 1.75; }
+    .install-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    /* ==========================================================
        TOAST
        ========================================================== */
     .toast-wrap {
@@ -1286,8 +1403,29 @@
 
     // === Constants ===
     const STORAGE_KEY = 'sft_data_v1';
-    const INSTALL_DISMISS_KEY = 'sft_install_dismissed';
     const APP_VERSION = '1.0.0';
+
+    // Per-platform dismissal keys so a dismiss on one platform doesn't suppress the others
+    const DISMISS_KEYS = {
+      safariRedirect:   'sft_safari_redirect_dismissed',   // non-Safari iOS top banner
+      safariHint:       'sft_safari_install_hint_dismissed', // Safari iOS hint banner
+      chromiumInstall:  'sft_chromium_install_dismissed'     // Android/Desktop install pill
+    };
+
+    // === Platform detection ===
+    // iOS-only constraint: Apple restricts PWA installation to Safari. All third-party iOS
+    // browsers (Chrome iOS, Firefox iOS, Edge iOS, etc.) use Safari's engine but Apple
+    // removes the install capability. We detect this so we can route users correctly.
+    const Platform = (function() {
+      const ua = navigator.userAgent;
+      const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      const isNonSafariIOS = isIOS && /CriOS|FxiOS|EdgiOS|OPiOS|mercury|GSA/.test(ua);
+      const isSafariIOS = isIOS && !isNonSafariIOS;
+      const isAndroid = /Android/.test(ua);
+      const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+                       || window.navigator.standalone === true;
+      return { isIOS, isNonSafariIOS, isSafariIOS, isAndroid, isStandalone };
+    })();
 
     /**
      * Single source of truth for currency definitions.
@@ -1435,7 +1573,27 @@
         const c = CATEGORIES.find(x => x.id === name);
         return c ? c.icon : 'wallet';
       },
-      renderIcons() { if (window.lucide) window.lucide.createIcons(); }
+      renderIcons() { if (window.lucide) window.lucide.createIcons(); },
+
+      /** Copy the current app URL to clipboard with a graceful fallback. */
+      async copyAppLink() {
+        const url = window.location.href;
+        try {
+          await navigator.clipboard.writeText(url);
+          Toast.show('Link copied — paste in Safari', 'success');
+        } catch (e) {
+          // Older-browser fallback
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); Toast.show('Link copied — paste in Safari', 'success'); }
+          catch (err) { Toast.show('Could not copy link', 'error'); }
+          document.body.removeChild(ta);
+        }
+      }
     };
 
     // === Store ===
@@ -1678,8 +1836,19 @@
       header() {
         const hasFunds = State.data.funds.length > 0;
         const themeIcon = (State.data.settings.theme === 'dark') ? 'sun' : 'moon';
-        const install = (window.__sftDeferredPrompt && !localStorage.getItem(INSTALL_DISMISS_KEY))
-          ? `<button class="install-pill" data-action="install"><i data-lucide="download"></i>Install</button>` : '';
+
+        // Install pill — visible whenever the platform can install and it isn't
+        // already installed. iOS always shows it (Apple gives no programmatic
+        // prompt); Chromium platforms need beforeinstallprompt to have fired.
+        let install = '';
+        if (!Platform.isStandalone) {
+          if (Platform.isSafariIOS || Platform.isNonSafariIOS) {
+            install = `<button class="install-pill" data-action="install"><i data-lucide="download"></i>Install</button>`;
+          } else if (window.__sftDeferredPrompt && !localStorage.getItem(DISMISS_KEYS.chromiumInstall)) {
+            install = `<button class="install-pill" data-action="install"><i data-lucide="download"></i>Install</button>`;
+          }
+        }
+
         const demo = !hasFunds
           ? `<button class="demo-pill" data-action="load-demo">Load demo data</button>` : '';
         const html = `
@@ -1693,13 +1862,49 @@
         U.renderIcons();
       },
 
+      /**
+       * Top-of-home banner for non-Safari iOS browsers. Persists across renders
+       * until the user dismisses with ×, then never returns (per-platform key).
+       */
+      safariBanner() {
+        if (!Platform.isNonSafariIOS) return '';
+        if (Platform.isStandalone) return '';
+        if (localStorage.getItem(DISMISS_KEYS.safariRedirect)) return '';
+        return `
+          <div class="safari-banner" role="status">
+            <span class="safari-banner-icon"><i data-lucide="info"></i></span>
+            <div class="safari-banner-text">Open this page in <strong>Safari</strong> to install Sinking Funds on your iPhone.</div>
+            <button class="btn btn-secondary" data-action="copy-link"><i data-lucide="copy"></i> Copy link</button>
+            <button class="safari-banner-close" data-action="dismiss-safari-redirect" aria-label="Dismiss"><i data-lucide="x"></i></button>
+          </div>
+        `;
+      },
+
+      /**
+       * One-time hint for Safari iOS pointing at the Install pill in the header.
+       * Subtle, dismissible, never returns.
+       */
+      safariHint() {
+        if (!Platform.isSafariIOS) return '';
+        if (Platform.isStandalone) return '';
+        if (State.data.funds.length === 0) return '';
+        if (localStorage.getItem(DISMISS_KEYS.safariHint)) return '';
+        return `
+          <div class="safari-banner" role="status" style="background:var(--accent-subtle);border-color:color-mix(in srgb, var(--accent) 30%, transparent);">
+            <span class="safari-banner-icon" style="background:transparent;color:var(--accent);"><i data-lucide="download"></i></span>
+            <div class="safari-banner-text">Tap <strong>Install</strong> in the header to add this app to your home screen.</div>
+            <button class="safari-banner-close" data-action="dismiss-safari-hint" aria-label="Dismiss"><i data-lucide="x"></i></button>
+          </div>
+        `;
+      },
+
       home() {
         const wrap = document.getElementById('view-home');
         const allFunds = State.data.funds;
         const active = allFunds.filter(f => !f.archived);
 
         if (allFunds.length === 0) {
-          wrap.innerHTML = Render._empty();
+          wrap.innerHTML = Render.safariBanner() + Render._empty();
           U.renderIcons();
           return;
         }
@@ -1737,6 +1942,8 @@
           : '';
 
         wrap.innerHTML = `
+          ${Render.safariBanner()}
+          ${Render.safariHint()}
           <div class="card hero">
             <div class="hero-label">Total saved</div>
             <div class="hero-amount tabular">${U.formatMoney(dom.saved, dominant)}</div>
@@ -2614,6 +2821,70 @@
         Modal.open(html, { onMount: (root) => {
           root.querySelector('#confirmYes').addEventListener('click', () => { onConfirm(); Modal.close(); });
         }});
+      },
+
+      /**
+       * Shown in non-Safari iOS browsers when the user taps Install. Explains the
+       * Safari-only restriction, warns about per-browser data isolation, and offers
+       * a copy-link button. Never mentions Chrome iOS "Add to Home Screen" because
+       * that creates a useless bookmark that loses all data.
+       */
+      safariRedirect() {
+        const html = `
+          <div class="modal-header">
+            <h3>Open in Safari to install</h3>
+            <button class="icon-btn" data-action="close-modal" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+          <p style="color:var(--text-primary);font-size:14px;line-height:1.6;margin-bottom:12px;">iPhone only supports installing web apps through Safari. Other browsers like Chrome and Firefox cannot install apps on iOS due to Apple's restrictions.</p>
+          <p style="color:var(--text-secondary);font-size:13px;line-height:1.5;">Your saved funds are stored per-browser. Data created here in this browser won't appear in Safari, so it's best to switch to Safari now before adding funds.</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" data-action="close-modal">Got it</button>
+            <button type="button" class="btn btn-primary" id="srCopy"><i data-lucide="copy"></i> Copy link</button>
+          </div>
+        `;
+        Modal.open(html, { onMount: (root) => {
+          root.querySelector('#srCopy').addEventListener('click', () => { U.copyAppLink(); });
+        }});
+      },
+
+      /**
+       * Shown in Safari iOS when the user taps Install. Numbered Share → Add to
+       * Home Screen → Add walkthrough, with an inline iOS share-icon SVG so users
+       * recognize the button to tap.
+       */
+      iosInstall() {
+        const shareIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
+        const plusIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;
+        const checkIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+        const html = `
+          <div class="modal-header">
+            <h3>Install Sinking Funds</h3>
+            <button class="icon-btn" data-action="close-modal" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+          <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:16px;">Add to your home screen for a full-screen, app-like experience.</p>
+          <div class="install-steps">
+            <div class="install-step">
+              <span class="install-step-num">1</span>
+              <div class="install-step-body">Tap the <strong>Share</strong> button at the bottom of Safari.</div>
+              <span class="install-step-icon">${shareIconSVG}</span>
+            </div>
+            <div class="install-step">
+              <span class="install-step-num">2</span>
+              <div class="install-step-body">Scroll down and tap <strong>Add to Home Screen</strong>.</div>
+              <span class="install-step-icon">${plusIconSVG}</span>
+            </div>
+            <div class="install-step">
+              <span class="install-step-num">3</span>
+              <div class="install-step-body">Tap <strong>Add</strong> in the top-right corner.</div>
+              <span class="install-step-icon">${checkIconSVG}</span>
+            </div>
+          </div>
+          <p class="install-note">The app will work offline and launch in full-screen mode just like a native app.</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-primary" data-action="close-modal">Got it</button>
+          </div>
+        `;
+        Modal.open(html);
       }
     };
 
@@ -2913,14 +3184,37 @@
           return;
         }
         if (e.target.closest('[data-action="install"]')) {
-          if (window.__sftDeferredPrompt) {
+          // Route per platform: native prompt on Chromium, instructions on Safari iOS,
+          // explainer on non-Safari iOS. Apple doesn't expose a programmatic prompt.
+          if (Platform.isSafariIOS) {
+            Modal.iosInstall();
+          } else if (Platform.isNonSafariIOS) {
+            Modal.safariRedirect();
+          } else if (window.__sftDeferredPrompt) {
             window.__sftDeferredPrompt.prompt();
             window.__sftDeferredPrompt.userChoice.then(c => {
-              if (c.outcome === 'accepted') localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+              if (c.outcome === 'accepted') localStorage.setItem(DISMISS_KEYS.chromiumInstall, '1');
               window.__sftDeferredPrompt = null;
               Render.header();
             });
           }
+          return;
+        }
+        if (e.target.closest('[data-action="copy-link"]')) {
+          e.preventDefault();
+          U.copyAppLink();
+          return;
+        }
+        if (e.target.closest('[data-action="dismiss-safari-redirect"]')) {
+          e.preventDefault();
+          localStorage.setItem(DISMISS_KEYS.safariRedirect, '1');
+          Render.home();
+          return;
+        }
+        if (e.target.closest('[data-action="dismiss-safari-hint"]')) {
+          e.preventDefault();
+          localStorage.setItem(DISMISS_KEYS.safariHint, '1');
+          Render.home();
           return;
         }
 
@@ -3101,7 +3395,7 @@
         Render.header();
       });
       window.addEventListener('appinstalled', () => {
-        localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+        localStorage.setItem(DISMISS_KEYS.chromiumInstall, '1');
         window.__sftDeferredPrompt = null;
         Render.header();
         Toast.show('App installed', 'success');
